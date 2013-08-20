@@ -39,7 +39,3 @@ repeat starting and killing
 kill shell 2
 
 nothing happens - which is correct.
-
-issues
-
-Make monitor a supervisor?
