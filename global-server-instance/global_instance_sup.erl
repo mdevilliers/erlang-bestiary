@@ -22,9 +22,12 @@ start_link() ->
 
 init([]) ->
 
-	GlobalWorker = 
-				{global_worker, 
+	GlobalWorker = {global_worker, 
 					{global_instance_worker, start_global_worker, []}, 
 					permanent , 1000, worker, []},
 
-    {ok, { {one_for_one, 5, 10}, [GlobalWorker]} }.
+	Monitor = {global_monitor, 
+					{global_instance_monitor, start_monitoring, []}, 
+					permanent , 1000, worker, []},
+
+    {ok, { {one_for_one, 5, 10}, [GlobalWorker, Monitor]} }.

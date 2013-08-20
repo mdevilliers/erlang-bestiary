@@ -9,33 +9,20 @@
          terminate/2,
          code_change/3]).
 
--export ([start_global_worker/0,start_monitoring/1]).
-
-start_monitoring(Pid) ->
-	process_flag(trap_exit, true),
-	link(Pid),
-	receive
-		{'EXIT', Pid, Why} -> 
-			io:format("Pid: ~p died. Reason: ~p~n", [Pid, Why]),
-			io:format("Attempting re-start on this node~n"),
-			{ok,Pid2} = start_global_worker(),
-			start_monitoring(Pid2)
-	end.
+-export ([start_global_worker/0]).
 
 start_global_worker() ->
 	case gen_server:start_link({global, ?MODULE}, ?MODULE, [], []) of
 	    {ok, Pid} -> 
 	        {ok, Pid};
 	    {error, {already_started, Pid}} -> 
-	    	io:format("Already started on ~p node~n", [Pid]), 
-	        spawn(fun() -> start_monitoring(Pid) end),
+	    	io:format("Worker already started on ~p node~n", [Pid]), 
 	        {ok, Pid};
 	    Else -> Else
 	end.
 
 init([]) ->
-		process_flag(trap_exit, true),
-		io:format("worker starting ~p~n", [self()]),
+		io:format("worker started on ~p~n", [self()]),
     	{ok, []}.
 
 handle_call(_Request, _From, State) ->
