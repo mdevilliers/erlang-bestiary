@@ -1,14 +1,22 @@
+compile
+
+windows -
+rebar.cmd compile
+
+linux
+rebar compile
+
 shell 1
 
-erl -sname node0@localhost
+erl -pa ebin -sname node0@localhost
 
 shell 2
 
-erl -sname node1@localhost
+erl -pa ebin -sname node1@localhost
 
 shell 3
 
-erl -sname node2@localhost
+erl -pa ebin -sname node2@localhost
 
 ```
 global_instance_app:join_node(node0@localhost).
