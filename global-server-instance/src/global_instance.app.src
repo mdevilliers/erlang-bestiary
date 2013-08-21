@@ -1,0 +1,12 @@
+{application, global_instance,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { global_instance_app, []}},
+  {env, []}
+ ]}.
