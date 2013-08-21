@@ -23,7 +23,7 @@ start_monitoring() ->
 
 loop(Pid) ->
 	receive
-		{'DOWN',  _MonitorReference, process, SomePid, Reason} ->
+		{'DOWN', _MonitorReference, process, SomePid, Reason} ->
 			io:format("Pid: ~p down. Reason: ~p~n", [SomePid, Reason]),
 			io:format("Attempting re-start on this node~n"),
 			start_monitoring();
