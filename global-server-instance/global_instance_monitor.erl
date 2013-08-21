@@ -13,29 +13,44 @@
 
 start_monitoring() ->
 	{ok,Pid} = global_instance_worker:start_global_worker(),
-	start_monitoring(Pid).
-start_monitoring(Pid) ->
-	process_flag(trap_exit, true),
-	link(Pid),
-	receive
-		{'EXIT', Pid, Why} -> 
-			io:format("Pid: ~p died. Reason: ~p~n", [Pid, Why]),
-			io:format("Attempting re-start on this node~n"),
-			{ok,Pid2} = global_instance_worker:start_global_worker(),
-			start_monitoring(Pid2)
+	io:format("Is local: ~p .~n", [is_local_pid(Pid)]),
+
+	case is_local_pid(Pid) of
+		false ->
+			%process_flag(trap_exit, true),
+			link(Pid),
+			monitor(Pid);
+		true  ->
+			{ok,Pid}
 	end.
+
+monitor(Pid) ->
+	receive
+		{'EXIT', SomePid, noconnection} -> 
+			io:format("Pid: ~p died. Reason: noconnection~n", [SomePid]),
+			io:format("Attempting re-start on this node~n"),
+			start_monitoring();
+		{'EXIT', SomePid, normal} ->
+			io:format("Pid: ~p died. Reason: exit. Monitoring ~p~n", [SomePid, Pid]),
+			monitor(Pid);
+		Msg ->
+			io:format("Unknown Message: ~p~n", [Msg])
+	end.
+
+is_local_pid(Pid) ->
+	node() =:= node(Pid).
 
 init([]) ->
 		io:format("monitor starting ~p~n", [self()]),
     	{ok, []}.
 
-handle_call(_Request, _From, State) ->
-		io:format("monitor handle_call~n", []),
+handle_call(Request, _From, State) ->
+		io:format("monitor handle_call ~p~n", [Request]),
         Reply = ok,
         {reply, Reply, State}.
 
-handle_cast(_Msg, State) ->
-		io:format("monitor handle_cast~n", []),
+handle_cast(Msg, State) ->
+		io:format("monitor handle_cast ~p~n", [Msg]),
         {noreply, State}.
 
 handle_info(Info, State) ->

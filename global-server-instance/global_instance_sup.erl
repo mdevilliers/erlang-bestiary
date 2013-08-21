@@ -13,7 +13,7 @@
 %% ===================================================================
 
 start_link() ->
-	io:format("supervisor starting~n", []),
+	io:format("supervisor starting ~p~n", [self()]),
  	supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %% ===================================================================

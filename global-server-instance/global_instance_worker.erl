@@ -22,25 +22,25 @@ start_global_worker() ->
 	end.
 
 init([]) ->
-		io:format("worker started on ~p~n", [self()]),
-    	{ok, []}.
+	io:format("worker started on ~p~n", [self()]),
+	{ok, []}.
 
-handle_call(_Request, _From, State) ->
-		io:format("worker handle_call~n", []),
-        Reply = ok,
-        {reply, Reply, State}.
+handle_call(Request, _From, State) ->
+	io:format("worker handle_call ~p.~n", [Request]),
+    Reply = ok,
+    {reply, Reply, State}.
 
-handle_cast(_Msg, State) ->
-		io:format("worker handle_cast~n", []),
-        {noreply, State}.
+handle_cast(Msg, State) ->
+	io:format("worker handle_cast ~p.~n", [Msg]),
+    {noreply, State}.
 
 handle_info(Info, State) ->
-		io:format("worker handle_info ~p ~p~n", [Info,State]),
-    	{noreply, State}.
+	io:format("worker handle_info ~p ~p~n", [Info,State]),
+	{noreply, State}.
 
 terminate(Reason, State) ->
-		io:format("worker terminate ~p ~p~n", [Reason, State]),
-        ok.
+	io:format("worker terminate ~p ~p~n", [Reason, State]),
+    ok.
 
 code_change(_OldVsn, State, _Extra) ->
-   		{ok, State}.
+   	{ok, State}.
