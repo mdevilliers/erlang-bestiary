@@ -1,0 +1,13 @@
+{application, cowboy_introduction,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+				  cowboy
+                 ]},
+  {mod, { cowboy_introduction_app, []}},
+  {env, [{http_port,8080}]}
+ ]}.
