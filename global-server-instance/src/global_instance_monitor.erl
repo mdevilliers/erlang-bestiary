@@ -13,26 +13,20 @@
 
 start_monitoring() ->
 	{ok,Pid} = global_instance_worker:start_global_worker(),
-	io:format("Is local: ~p .~n", [is_local_pid(Pid)]),
-
 	case is_local_pid(Pid) of
 		false ->
-			%process_flag(trap_exit, true),
-			link(Pid),
-			monitor(Pid);
+			monitor(process,Pid),
+			loop(Pid);
 		true  ->
 			{ok,Pid}
 	end.
 
-monitor(Pid) ->
+loop(Pid) ->
 	receive
-		{'EXIT', SomePid, noconnection} -> 
-			io:format("Pid: ~p died. Reason: noconnection~n", [SomePid]),
+		{'DOWN',  _MonitorReference, process, SomePid, Reason} ->
+			io:format("Pid: ~p down. Reason: ~p~n", [SomePid, Reason]),
 			io:format("Attempting re-start on this node~n"),
 			start_monitoring();
-		{'EXIT', SomePid, normal} ->
-			io:format("Pid: ~p died. Reason: exit. Monitoring ~p~n", [SomePid, Pid]),
-			monitor(Pid);
 		Msg ->
 			io:format("Unknown Message: ~p~n", [Msg])
 	end.
