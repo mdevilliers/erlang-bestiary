@@ -11,6 +11,7 @@
 
 -export ([start_global_worker/0]).
 
+% api
 start_global_worker() ->
 	case gen_server:start_link({global, ?MODULE}, ?MODULE, [], []) of
 	    {ok, Pid} -> 
@@ -21,8 +22,10 @@ start_global_worker() ->
 	    Else -> Else
 	end.
 
+% gen_server
 init([]) ->
 	io:format("worker started on ~p~n", [self()]),
+	erlang:send_after(500, self(), {tick}),
 	{ok, []}.
 
 handle_call(Request, _From, State) ->
@@ -34,6 +37,14 @@ handle_cast(Msg, State) ->
 	io:format("worker handle_cast ~p.~n", [Msg]),
     {noreply, State}.
 
+handle_info({tick}, State) ->
+	io:format(".~n"),
+	erlang:send_after(500, self(), {tick}),
+	{noreply, State};
+handle_info({stopworkerhard}, _State) ->
+	throw(stopworkerhard);
+handle_info({stopworker}, State) ->
+	{stop,stopworker,State};
 handle_info(Info, State) ->
 	io:format("worker handle_info ~p ~p~n", [Info,State]),
 	{noreply, State}.

@@ -27,7 +27,7 @@ init([]) ->
 					permanent , 1000, worker, []},
 
 	Monitor = {global_monitor, 
-					{global_instance_monitor, start_monitoring, []}, 
+					{global_instance_monitor, start_monitor, []}, 
 					permanent , 1000, worker, []},
 
     {ok, { {one_for_one, 5, 10}, [GlobalWorker, Monitor]} }.
