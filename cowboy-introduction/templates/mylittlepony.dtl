@@ -1,0 +1,1 @@
+<html><body>Your favorite Little Pony is {{ pony_name }}.</body></html>
