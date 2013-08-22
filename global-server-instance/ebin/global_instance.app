@@ -1,9 +1,0 @@
-{application,global_instance,
-             [{description,[]},
-              {vsn,"1"},
-              {registered,[]},
-              {applications,[kernel,stdlib]},
-              {mod,{global_instance_app,[]}},
-              {env,[]},
-              {modules,[global_instance_app,global_instance_monitor,
-                        global_instance_sup,global_instance_worker]}]}.
