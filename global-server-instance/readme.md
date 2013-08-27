@@ -43,7 +43,3 @@ kill shell 1
 worker starts on shell2 or shell 3
 
 repeat starting, joining and killing
-
-kill shell 2
-
-nothing happens - which is correct.
