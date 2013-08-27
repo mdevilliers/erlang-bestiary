@@ -26,7 +26,8 @@ stop(_State) ->
 routes() ->
     [
      {'_', [
-            {"/", simple_template_handler, []}
+            {"/a", simple_template_handler, []},
+            {"/b", cowboy_introduction_handler, []}
            ]}
     ].
 
