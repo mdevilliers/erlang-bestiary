@@ -15,7 +15,6 @@ range([H|T]) ->
 	Max = maximum(H,T),
 	[Min,Max].
 
-
 maximum(Largest, []) ->
 	Largest;
 maximum(Largest,[H|T]) ->
@@ -25,7 +24,6 @@ maximum(Largest,[H|T]) ->
 		H < Largest ->
 			maximum(Largest,T)
 	end.
-
 
 minimum(Smallest, []) ->
 	Smallest;
