@@ -1,5 +1,8 @@
 -module (game).
--export ([new_game/0, next/1, decide/1, play/1]).
+-export ([new_game/0, play/1]).
+
+% model { gamestate , player one card, player two card, player one hand, player two hand, cards in the middle (if any)}
+% gamestate - game_started, game_in_progress, game_over, game_over_draw
 
 new_game() ->
 	random:seed(now()),
@@ -13,7 +16,7 @@ play(Game) ->
 	Game1 = decide(Game0),
 	case Game1 of
 		{game_over_draw, _, _ , _, _, _} ->
-			io:format("draw - no one wins... ~n");
+			io:format("draw - no-one wins... ~n");
 		{game_over, _, _ , _, [], _} ->
 			io:format("player one wins ~n");
 		{game_over, _, _ , [], _, _} ->
@@ -28,8 +31,7 @@ decide({game_in_progress, Card1, Card2 , PlayerOne, PlayerTwo, Bank}) ->
 	case is_higher_card(Card1, Card2)   of
 		draw ->
 			io:format("D ~p == ~p~n", [Card1, Card2]),
-			Bank0 = lists:flatten([Card1 | [Card2 | Bank]]),
-			{game_in_progress, nocard, nocard , PlayerOne, PlayerTwo, lists:reverse(Bank0)};
+			{game_in_progress, nocard, nocard , PlayerOne, PlayerTwo, collect_cards(Card1, Card2, Bank)};
 		false -> 
 			io:format("2 ~p < ~p~n", [Card1, Card2]),
 			{game_in_progress, nocard, nocard , PlayerOne, collect_cards(Card1, Card2, Bank, PlayerTwo), []};
@@ -62,10 +64,10 @@ is_higher_card({Card1,_}, {Card2,_}) ->
 
 score_card_value(Value) ->
 	case Value of
-		"A" -> 14;
 		"J" -> 11;
 		"Q" -> 12;
 		"K" -> 13;
+		"A" -> 14;
 		_ -> Value
 	end.
 
@@ -77,7 +79,7 @@ split_deck([], PlayerOne, PlayerTwo) ->
 split_deck([H1 , H2 | T], PlayerOne, PlayerTwo) ->
 	split_deck(T, [H1|PlayerOne], [H2|PlayerTwo]).
 
+collect_cards(Card1, Card2, Bank) ->
+	lists:flatten([Card1 | [Card2 | Bank ]]).
 collect_cards(Card1, Card2, Bank, Hand) ->
-	One = lists:flatten([Card1 | [Card2 | Bank ]]),
-	Two = lists:reverse(One),
-	lists:flatten(Hand, Two).
+	lists:flatten(Hand, lists:flatten([Card1 | [Card2 | Bank ]])).
