@@ -17,9 +17,9 @@ new_board(MinimumSetsToInclude, MaximunSetsToInclude) ->
 new_board() ->
 	Deck = make_deck(),
 	ShuffledDeck = shuffle(Deck),
-	FirstTwelveCards = top(ShuffledDeck,16),
-	TotalSets = count_sets(FirstTwelveCards),
-	{length(TotalSets), FirstTwelveCards, TotalSets}.
+	Board = top(ShuffledDeck,16),
+	TotalSets = count_sets(Board),
+	{length(TotalSets), Board, TotalSets}.
 
 % helpers
 count_sets(Deck) ->
