@@ -37,6 +37,8 @@ count_sets([H|T], Acc) ->
 check_combo([{C1, S1, F1, N1}, {C2, S2, F2, N2}, {C3, S3, F3, N3}]) ->
 	check_attribute(C1, C2, C3) and check_attribute(S1, S2, S3) and check_attribute(F1, F2, F3) and check_attribute(N1, N2, N3).
 
+check_attribute(A,A,A) ->
+	true;
 check_attribute(A,A,_) ->
 	false;
 check_attribute(A,_,A) ->
