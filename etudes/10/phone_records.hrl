@@ -1,0 +1,3 @@
+-record(time,{ hour, minute, second }).
+-record(date,{ year, month, day}).
+-record(phone_call, {number, call_start_date = #date{}, call_start_time = #time{} , call_end_date = #date{}, call_end_time = #time{} }).
