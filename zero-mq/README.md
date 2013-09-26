@@ -6,7 +6,12 @@ run the server
 
 erl -pa ebin deps/*/ebin
 
+```
 
+zero_mq_app:start([],[]).
+zero_mq_publisher:listen().
+
+```
 
 run the client
 
