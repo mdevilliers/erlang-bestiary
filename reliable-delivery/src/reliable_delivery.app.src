@@ -1,0 +1,12 @@
+{application, reliable_delivery,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { reliable_delivery_app, []}},
+  {env, []}
+ ]}.
