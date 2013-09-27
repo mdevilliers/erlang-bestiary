@@ -3,18 +3,23 @@
 -export ([start/0, monitor/3, ack/1, callback/3]).
 
 start() ->
+	lager:start(),
 	application:start(reliable_delivery).
 
 monitor(Identifier, LeaseTime, Value) ->
 	{ok,Pid} = reliable_delivery_sup:start_monitor(Identifier, LeaseTime),
 	message_store:insert(Identifier, Pid, Value),
-	Identifier.
+	{info, ok}.
 
 ack(Identifier) ->
-	{ok, Pid, _} = message_store:lookup(Identifier),
-	reliable_delivery_worker:notify_acked(Pid),
-	ok.
+	case message_store:lookup(Identifier) of
+		{error,not_found} ->
+			{info, key_not_found};
+		{ok, Pid, _} ->
+			reliable_delivery_worker:notify_acked(Pid),
+			{info, ok}
+	end.
 
 callback(expired, Identifier, Value) ->
-	io:format("Callback : ~p, ~p, ~p.~n", [expired,Identifier,Value]),
+	lager:info("Callback : ~p, ~p, ~p.~n", [expired , Identifier, Value]),
 	ok.

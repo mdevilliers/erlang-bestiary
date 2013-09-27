@@ -1,4 +1,10 @@
 
+windows
+
+erl -pa ebin \deps\lager\ebin \deps\goldrush\ebin
+
+linux
+
 erl -pa ebin deps/*/ebin
 
 ```
