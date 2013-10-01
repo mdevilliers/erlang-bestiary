@@ -1,6 +1,6 @@
 -module (set).
 -export ([new_board/1, new_board/2]).
--export ([game_as_json/1, json_to_file/3]).
+-export ([game_as_json/1]).
 
 % api
 new_board(MinimumSetsToInclude) ->
@@ -17,15 +17,6 @@ new_board(MinimumSetsToInclude, MaximunSetsToInclude) ->
 
 game_as_json({TotalSets,Cards,Combinations}) ->
 	jsx:encode([{<<"totalSets">>, TotalSets}, {<<"cards">>, Cards}, {<<"combinations">>, Combinations }]).
-
-json_to_file(Path, Json, Prettify) ->
-	case Prettify of
-		false ->
-			file:write_file(Path, Json);
-		true ->
-			Pretty = jsx:prettify(Json),
-			file:write_file(Path, Pretty)
-	end.	
 
 % helpers
 new_board() ->
