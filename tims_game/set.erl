@@ -1,19 +1,33 @@
 -module (set).
--export ([new_board/0, new_board/1, new_board/2]).
+-export ([new_board/1, new_board/2]).
+-export ([game_as_json/1, json_to_file/3]).
 
 % api
 new_board(MinimumSetsToInclude) ->
 	new_board(MinimumSetsToInclude, 9999).
-
+ 
 new_board(MinimumSetsToInclude, MaximunSetsToInclude) ->
-	{Length, Cards, Combinations} = new_board(),
-	case (Length =< MaximunSetsToInclude) and (Length >= MinimumSetsToInclude) of
+	{TotalSets, Cards, Combinations} = new_board(),
+	case (TotalSets =< MaximunSetsToInclude) and (TotalSets >= MinimumSetsToInclude) of
 		false ->
 			new_board(MinimumSetsToInclude, MaximunSetsToInclude)  ;
 		true ->
-			{Length, Cards, Combinations} 
+			{TotalSets, Cards, Combinations} 
 	end.
 
+game_as_json({TotalSets,Cards,Combinations}) ->
+	jsx:encode([{<<"totalSets">>, TotalSets}, {<<"cards">>, Cards}, {<<"combinations">>, Combinations }]).
+
+json_to_file(Path, Json, Prettify) ->
+	case Prettify of
+		false ->
+			file:write_file(Path, Json);
+		true ->
+			Pretty = jsx:prettify(Json),
+			file:write_file(Path, Pretty)
+	end.	
+
+% helpers
 new_board() ->
 	Deck = make_deck(),
 	ShuffledDeck = shuffle(Deck),
@@ -21,7 +35,6 @@ new_board() ->
 	TotalSets = count_sets(Board),
 	{length(TotalSets), Board, TotalSets}.
 
-% helpers
 count_sets(Deck) ->
 	AllCombinations = combinations(3, Deck),
 	count_sets(AllCombinations,[]).
@@ -34,7 +47,7 @@ count_sets([H|T], Acc) ->
 		false -> count_sets(T, Acc)
 	end.
 
-check_combo([{C1, S1, F1, N1}, {C2, S2, F2, N2}, {C3, S3, F3, N3}]) ->
+check_combo([[C1, S1, F1, N1], [C2, S2, F2, N2], [C3, S3, F3, N3]]) ->
 	check_attribute(C1, C2, C3) and check_attribute(S1, S2, S3) and check_attribute(F1, F2, F3) and check_attribute(N1, N2, N3).
 
 check_attribute(A,A,A) ->
@@ -52,10 +65,10 @@ top(Deck, N) ->
 	lists:sublist(Deck,N).
 
 make_deck() ->
-	[{Colour , Shape, Fill, Number} || 
-		Colour <- [red, green, blue ], 
-		Shape  <- [wotsit, sausage, diamond], 
-		Fill   <- [empty, hatched, solid], 
+	[[Colour , Shape, Fill, Number] || 
+		Colour <- [<<"red">>, <<"green">>, <<"blue">> ], 
+		Shape  <- [<<"wotsit">>, <<"sausage">>, <<"diamond">>], 
+		Fill   <- [<<"empty">>, <<"hatched">>, <<"solid">>], 
 		Number <- [1,2,3]].
 
 shuffle(Deck) -> shuffle(Deck, []).
