@@ -1,0 +1,118 @@
+<html>
+	<head>
+		<script type='text/javascript' src='knockout-3.0.0rc.js'></script>
+	</head>
+	<body>
+	
+	<div id="board">
+		
+		<div data-bind="text: message"></div>
+		
+		<div><b>Board</b></div>
+		<div data-bind="foreach: data.cards">
+            <div data-bind="text: $data, click:$parent.selected"></div>
+		</div>
+		
+		<div><b>Selected Cards</b></div>
+		<div data-bind="foreach: selectedcards">
+            <div data-bind="text: $data"></div>
+		</div>
+		
+		<button data-bind="click: clear">Clear</button>
+		
+		<div><b>Total Sets (<span data-bind="text: data.totalSets" ></span>)</b></div>
+		
+		<div data-bind="foreach: data.combinations">
+            <div data-bind="text: $data"></div>
+		</div>
+	</div>
+	
+	<script>
+	
+		var board = {
+						"totalSets":4,
+						"cards":[["blue","wotsit","solid",3],["red","wotsit","solid",1],["green","diamond","empty",1],["green","wotsit","hatched",1],["blue","diamond","empty",3],["red","diamond","solid",2],["blue","diamond","hatched",3],["red","diamond","empty",3],["blue","wotsit","empty",3],["red","diamond","solid",3],["red","wotsit","solid",2],["green","diamond","solid",1],["red","wotsit","hatched",1],["blue","diamond","empty",2],["red","sausage","empty",3],["red","sausage","empty",1]],
+						"combinations": [
+											[["red","diamond","solid",2],["red","wotsit","hatched",1],["red","sausage","empty",3]],
+											[["green","wotsit","hatched",1],["blue","wotsit","empty",3],["red","wotsit","solid",2]],
+											[["green","diamond","empty",1],["red","diamond","empty",3],["blue","diamond","empty",2]],
+											[["green","diamond","empty",1],["red","diamond","solid",2],["blue","diamond","hatched",3]]
+										]
+						
+						};
+		//console.log(board);
+		
+		function viewModel (board)
+		{
+			var self = this;
+			self.data = board;
+			self.selectedcards = ko.observableArray([]);
+			self.message = ko.observable("Game started.");
+					
+			self.selected = function(card)
+				{
+					//console.log(card);
+					if(self.selectedcards().indexOf(card) >= 0) //remove existing cards e.g. deselect
+					{
+						self.selectedcards.remove(card);
+					}else if(self.selectedcards().length < 3 ) //only hold three items at a time
+					{
+						if(self.selectedcards().length == 0 ) // add any if empty
+						{
+							self.selectedcards.push(card);
+						}else if (self.selectedcards().indexOf(card) == -1) // don't add duplicates
+						{
+							self.selectedcards.push(card);
+						}
+						if(self.selectedcards().length == 3)
+						{
+							self.checkCombinations(); //check if we have a winner
+						}
+						//console.log(self.selectedcards);
+					}
+				};
+			
+			self.clear = function()
+			{
+				self.selectedcards.removeAll();
+				self.message("Game started.");
+			}
+			
+			self.concatSortAndJoin = function(arr1, arr2, arr3)
+			{
+				return arr1.concat( arr2, arr3).sort().join("");
+			}
+			
+			self.checkCombinations = function()
+			{
+				if(self.selectedcards().length != 3)
+				{
+					return;
+				}
+				
+				var solution = self.concatSortAndJoin(self.selectedcards()[0], self.selectedcards()[1], self.selectedcards()[2] );
+				
+				for(var i = 0 ; i < self.data.combinations.length ; i++)
+				{
+					var combination = self.data.combinations[i];
+					var to_check_solution = self.concatSortAndJoin(combination[0], combination[1],combination[2])
+
+					if(to_check_solution === solution)
+					{
+						self.message("Winner");
+						return;
+					}else
+					{
+						self.message( "Loser");
+					}
+				}
+			};
+		}
+
+		ko.applyBindings(new viewModel(board));
+
+	</script>
+
+	</body>
+</html>
+
