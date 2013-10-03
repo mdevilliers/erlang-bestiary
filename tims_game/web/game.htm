@@ -4,13 +4,40 @@
 	</head>
 	<body>
 	
-	<div id="board">
+	<style type="text/css">
+
+		body{
+		    margin:0;
+		    padding:0;
+		}
+		.container{
+		    overflow:hidden;
+		    width:800px;
+		}
+		.box{
+		    width:150px;
+		    height:75px;
+		    float:left;
+		    background-color:#ccc;
+		    margin-bottom:20px;
+		}
+		.spacing{
+		    margin-right:20px;
+		}
+
+	</style>
+
+	<div id="board" >
 		
 		<div data-bind="text: message"></div>
 		
 		<div><b>Board</b></div>
-		<div data-bind="foreach: data.cards">
-            <div data-bind="text: $data, click:$parent.selected"></div>
+		<div data-bind="foreach: data.cards" class="container">
+            <div data-bind="text: $data, 
+            				click:$parent.selected, 
+            				style: { color: $parent.selectedcards().indexOf($data) >= 0 ? 'red' : 'black'}" 
+            	class="box spacing"></div>
+
 		</div>
 		
 		<div><b>Selected Cards</b></div>
@@ -18,7 +45,7 @@
             <div data-bind="text: $data"></div>
 		</div>
 		
-		<button data-bind="click: clear">Clear</button>
+		<button data-bind="click: clear, visible: selectedcards().length > 0">Clear</button>
 		
 		<div><b>Total Sets (<span data-bind="text: data.totalSets" ></span>)</b></div>
 		
@@ -55,6 +82,8 @@
 					if(self.selectedcards().indexOf(card) >= 0) //remove existing cards e.g. deselect
 					{
 						self.selectedcards.remove(card);
+						self.message("Select 3 cards."); //helpful...
+						
 					}else if(self.selectedcards().length < 3 ) //only hold three items at a time
 					{
 						if(self.selectedcards().length == 0 ) // add any if empty
@@ -90,14 +119,14 @@
 					return;
 				}
 				
-				var solution = self.concatSortAndJoin(self.selectedcards()[0], self.selectedcards()[1], self.selectedcards()[2] );
+				var selected = self.concatSortAndJoin(self.selectedcards()[0], self.selectedcards()[1], self.selectedcards()[2] );
 				
 				for(var i = 0 ; i < self.data.combinations.length ; i++)
 				{
 					var combination = self.data.combinations[i];
-					var to_check_solution = self.concatSortAndJoin(combination[0], combination[1],combination[2])
+					var tocheck = self.concatSortAndJoin(combination[0], combination[1],combination[2])
 
-					if(to_check_solution === solution)
+					if(tocheck === selected)
 					{
 						self.message("Winner");
 						return;
