@@ -9,7 +9,13 @@ erl -pa ebin deps/*/ebin
 
 ```
 reliable_delivery:start().
-reliable_delivery:monitor(c,5000,<<"aa">>).
+reliable_delivery:monitor(<<"myuniqueidentifier">>,5000,<<"my value">>).
+
 message_store:lookup(c).
+
+% or 
+
+reliable_delivery:ack(<<"myuniqueidentifier">>).
+
 ```
 

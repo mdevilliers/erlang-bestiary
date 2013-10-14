@@ -27,6 +27,11 @@ ack(Identifier) ->
 			{info, ok}
 	end.
 
+callback(already_expired, Identifier, none) ->
+	folsom_metrics:new_counter(monitored_items_already_expired),
+	folsom_metrics:notify({monitored_items_already_expired, {inc, 1}}),
+	lager:info("Callback : ~p, ~p, ~p.~n", [already_expired , Identifier, none]),
+	ok;
 callback(expired, Identifier, Value) ->
 	folsom_metrics:new_counter(monitored_items_expired),
 	folsom_metrics:notify({monitored_items_expired, {inc, 1}}),
