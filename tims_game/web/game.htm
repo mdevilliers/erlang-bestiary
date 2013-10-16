@@ -1,5 +1,6 @@
 <html>
 	<head>
+		<script type='text/javascript' src='jquery-2.0.3.min.js'></script>
 		<script type='text/javascript' src='knockout-3.0.0rc.js'></script>
 	</head>
 	<body>
@@ -32,10 +33,11 @@
 		<div data-bind="text: message"></div>
 		
 		<div><b>Board</b></div>
-		<div data-bind="foreach: data.cards" class="container">
+		<div data-bind="foreach: data.cards, beforeAdd : showCard" class="container">
             <div data-bind="text: $data, 
             				click:$parent.selected, 
-            				style: { color: $parent.selectedcards().indexOf($data) >= 0 ? 'red' : 'black'}" 
+            				style: { color: $parent.selectedcards().indexOf($data) >= 0 ? 'red' : 'black'}
+            				" 
             	class="box spacing"></div>
 
 		</div>
@@ -112,6 +114,12 @@
 				return arr1.concat( arr2, arr3).sort().join("");
 			}
 			
+			self.showCard = function(elem)
+			{
+				console.log(elem);
+				$(elem).hide().slideDown();
+			}
+
 			self.checkCombinations = function()
 			{
 				if(self.selectedcards().length != 3)
