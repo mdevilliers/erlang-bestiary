@@ -5,8 +5,13 @@
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  cowboy,
+                  folsom,
+                  crypto,
+                  lager
+                  
                  ]},
   {mod, { reliable_delivery_app, []}},
-  {env, []}
+  {env, [{http_port,8180}]}
  ]}.

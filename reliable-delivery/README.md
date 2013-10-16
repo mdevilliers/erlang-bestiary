@@ -1,7 +1,7 @@
 
 windows
 
-erl -pa ebin \deps\lager\ebin \deps\goldrush\ebin \deps\folsom\ebin \deps\meck\ebin \deps\bear\ebin
+erl -pa ebin \deps\lager\ebin \deps\goldrush\ebin \deps\folsom\ebin \deps\meck\ebin \deps\bear\ebin \deps\ranch\ebin \deps\cowboy\ebin
 
 linux
 

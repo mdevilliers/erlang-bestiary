@@ -5,7 +5,10 @@
 
 start() ->
 	lager:start(),
-	application:start(folsom),
+	ok = application:start(folsom),
+	ok = application:start(crypto),
+    ok = application:start(ranch),
+    ok = application:start(cowboy),
 	application:start(reliable_delivery).
 
 start_test_harness() ->
@@ -22,7 +25,6 @@ do_start_test_harness(Number) ->
 	B2= <<"identifier">>,
 	reliable_delivery:monitor(<<B1/binary, B2/binary>>, Number * 1000, <<"data">>),
 	do_start_test_harness(Number-1).
-
 
 monitor(Identifier, LeaseTime, Value) ->
 	{ok,Pid} = reliable_delivery_sup:start_monitor(Identifier, LeaseTime),
