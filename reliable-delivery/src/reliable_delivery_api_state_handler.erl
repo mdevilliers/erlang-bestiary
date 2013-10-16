@@ -12,14 +12,21 @@ content_types_provided(Req, State) ->
 
 get_json(Req, State) ->
 	Data = message_store:select_all(),
-	DataNewFormat = to_json_format(Data, []),
+	DataNewFormat = iterate_current_items(Data, []),
+
+	lager:info("~p~n", [DataNewFormat]),
 	DataAsJson = jsx:encode([{<<"currentItems">>, DataNewFormat }]),
 	{DataAsJson, Req, State}.
 
-
 %helpers
-to_json_format([], Acc) ->
+iterate_current_items([], Acc) ->
 	Acc;
-to_json_format([H|T], Acc) ->
-	%H#monitorvalue{identifier = Identifier, value = Value}
-	to_json_format(T, [ {<<"identifier">> , H#monitorvalue.identifier , <<"value">>, H#monitorvalue.value| Acc]).
+iterate_current_items([H|T], Acc) ->
+	iterate_current_items(T, [ current_item_to_json_format(H) | Acc]).
+
+current_item_to_json_format([H|_]) ->
+	[	{<<"identifier">> , H#monitorvalue.identifier }, 
+		{<<"value">>, H#monitorvalue.value }, 
+		%{<<"created">>, H#monitorvalue.created },
+		{<<"timeout">>, H#monitorvalue.timeout }
+	].

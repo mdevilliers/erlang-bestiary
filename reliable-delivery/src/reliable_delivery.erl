@@ -27,7 +27,7 @@ do_start_test_harness(Number) ->
 
 monitor(Identifier, LeaseTime, Value) ->
 	{ok,Pid} = reliable_delivery_sup:start_monitor(Identifier, LeaseTime),
-	message_store:insert(Identifier, Pid, Value),
+	message_store:insert(Identifier, Pid, Value, LeaseTime),
 	folsom_metrics:new_counter(monitored_items),
 	folsom_metrics:notify({monitored_items, {inc, 1}}),
 	{info, ok}.
