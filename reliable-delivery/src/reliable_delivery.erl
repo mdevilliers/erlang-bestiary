@@ -38,7 +38,7 @@ ack(Identifier) ->
 			folsom_metrics:new_counter(monitored_items_missed_ack),
 	        folsom_metrics:notify({monitored_items_missed_ack, {inc, 1}}),
 			{info, key_not_found};
-		{ok, Pid, _} ->
+		{ok, Pid, _ , _ , _} ->
 			reliable_delivery_worker:notify_acked(Pid),
 			folsom_metrics:new_counter(monitored_items_acked),
 	        folsom_metrics:notify({monitored_items_acked, {inc, 1}}),

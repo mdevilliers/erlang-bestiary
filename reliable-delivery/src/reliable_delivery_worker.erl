@@ -49,7 +49,7 @@ handle_info(timeout, State) ->
   Identifier = State#lease.identifier,
 
   case message_store:lookup(Identifier) of
-    {ok, _, Value} ->
+    {ok, _, Value, _, _} ->
       reliable_delivery:callback(expired, Identifier, Value);
     {error, not_found} ->
       reliable_delivery:callback(already_expired, Identifier, none)
