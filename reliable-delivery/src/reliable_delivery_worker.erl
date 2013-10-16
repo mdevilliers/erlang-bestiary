@@ -17,7 +17,6 @@ state(Pid) ->
 notify_acked(Pid) ->
   gen_server:call(Pid, acked).
 
-
 init([Identifier,LeaseTime]) ->
    lager:info("Worker : Identifier : ~p, LeaseTime : ~p. ~n", [Identifier, LeaseTime]),
 
@@ -46,11 +45,17 @@ handle_cast(_Msg, State) ->
   {noreply, State}.
 
 handle_info(timeout, State) ->
-  %handle timeout logic here
+
   Identifier = State#lease.identifier,
-  {ok, _, Value} = message_store:lookup(Identifier),
-  reliable_delivery:callback(expired, Identifier, Value),
+
+  case message_store:lookup(Identifier) of
+    {ok, _, Value} ->
+      reliable_delivery:callback(expired, Identifier, Value);
+    {error, not_found} ->
+      reliable_delivery:callback(already_expired, Identifier, none)
+  end,
   {stop, normal,State};
+
 handle_info(_Info, State) ->
    lager:info("info ~p, ~p.", [_Info, State]),
   {noreply, State}.

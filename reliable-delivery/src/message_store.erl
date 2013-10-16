@@ -1,6 +1,6 @@
 -module (message_store).
 
--export ([init/0, insert/3, delete/1,lookup/1]).
+-export ([init/0, insert/3, delete/1,lookup/1, select_all/0]).
 
 -define (TABLE_ID, ?MODULE).
 
@@ -17,6 +17,9 @@ lookup(Identifier) ->
 		[{monitorvalue,Identifier, Pid, Value}] -> {ok, Pid, Value};
 		[] -> {error, not_found}
 	end.
+
+select_all() ->
+	ets:match(?TABLE_ID, '$1').
 
 delete(Identifier) ->
 	ets:delete(?TABLE_ID,Identifier).
