@@ -13,8 +13,7 @@ content_types_provided(Req, State) ->
 get_json(Req, State) ->
 	Data = message_store:select_all(),
 	DataNewFormat = iterate_current_items(Data, []),
-
-	lager:info("~p~n", [DataNewFormat]),
+	%lager:info("~p~n", [DataNewFormat]),
 	DataAsJson = jsx:encode([{<<"currentItems">>, DataNewFormat }]),
 	{DataAsJson, Req, State}.
 
@@ -27,6 +26,9 @@ iterate_current_items([H|T], Acc) ->
 current_item_to_json_format([H|_]) ->
 	[	{<<"identifier">> , H#monitorvalue.identifier }, 
 		{<<"value">>, H#monitorvalue.value }, 
-		%{<<"created">>, H#monitorvalue.created },
+		{<<"created">>, simple_date_to_binary_string(H#monitorvalue.created) },
 		{<<"timeout">>, H#monitorvalue.timeout }
 	].
+
+simple_date_to_binary_string(Date) ->
+	list_to_binary(dh_date:format("D, M Y h:m:s",Date)).
