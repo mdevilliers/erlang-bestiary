@@ -1,10 +1,9 @@
 -module (message_store).
-
 -export ([init/0, insert/3, delete/1,lookup/1, select_all/0]).
 
--define (TABLE_ID, ?MODULE).
+-include ("reliable_delivery.hrl").
 
--record (monitorvalue, {identifier, pid, value }).
+-define (TABLE_ID, ?MODULE).
 
 init() ->
 	ets:new(?TABLE_ID,[public, named_table, {keypos, #monitorvalue.identifier}]).

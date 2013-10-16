@@ -12,7 +12,6 @@ start() ->
 	application:start(reliable_delivery).
 
 start_test_harness() ->
-	reliable_delivery:start(),
 	spawn(?MODULE, do_start_test_harness, [500]),
 	spawn(?MODULE, do_start_test_harness, [500]),
 	spawn(?MODULE, do_start_test_harness, [500]),
