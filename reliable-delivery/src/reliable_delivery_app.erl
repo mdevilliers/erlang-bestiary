@@ -25,9 +25,18 @@ stop(_State) ->
 routes() ->
     [
      {'_', [
-            {"/", reliable_delivery_index_handler, []},
+
             {"/api/statistics", reliable_delivery_index_handler, []},
-            {"/api/state", reliable_delivery_api_state_handler, []}
+            {"/api/state", reliable_delivery_api_state_handler, []},
+            {"/", cowboy_static, [
+                    {directory, {priv_dir, reliable_delivery, []}},
+                    {file, "index.html"},
+                    {mimetypes, {fun mimetypes:path_to_mimes/2, default}}
+                ]},
+            {"/assets/[...]", cowboy_static, [
+                    {directory, {priv_dir, reliable_delivery, [<<"assets">>]}},
+                    {mimetypes, {fun mimetypes:path_to_mimes/2, default}}
+                ]}
            ]}
     ].
 

@@ -13,7 +13,7 @@ insert(Identifier,Pid, Value, Timeout) ->
 
 lookup(Identifier) ->
 	case ets:lookup(?TABLE_ID,Identifier) of
-		[{monitorvalue,Identifier, Pid, Value, Timeout, Created}] -> {ok, Pid, Value, Timeout, Created};
+		[{monitorvalue, Identifier, Pid, Value, Timeout, Created}] -> {ok, Pid, Value, Timeout, Created};
 		[] -> {error, not_found}
 	end.
 
