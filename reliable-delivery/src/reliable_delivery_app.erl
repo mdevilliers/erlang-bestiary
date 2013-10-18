@@ -28,15 +28,19 @@ routes() ->
 
             {"/api/statistics", reliable_delivery_index_handler, []},
             {"/api/state", reliable_delivery_api_state_handler, []},
-            {"/", cowboy_static, [
+            {"/", cowboy_static, 
+            	[
                     {directory, {priv_dir, reliable_delivery, []}},
                     {file, "index.html"},
                     {mimetypes, {fun mimetypes:path_to_mimes/2, default}}
-                ]},
-            {"/assets/[...]", cowboy_static, [
-                    {directory, {priv_dir, reliable_delivery, [<<"assets">>]}},
+                ]
+            },
+            {"/assets/[...]", cowboy_static, 
+            	[
+                	{directory, {priv_dir, reliable_delivery, [<<"assets">>]}},
                     {mimetypes, {fun mimetypes:path_to_mimes/2, default}}
-                ]}
+                ]
+            }
            ]}
     ].
 
