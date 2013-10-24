@@ -43,19 +43,23 @@
     <div class="container">
 
       <div class="starter-template">
-        <h1>ReliableDelivery</h1>
+        <p>
+          <h2><span data-bind="text: state_data().length"></span></h2>
+          <div data-bind="foreach: counters" >
+            <h3>
+              <span data-bind="text: key" ></span> : 
+              <span data-bind="text: value" ></span>
+            </h3>
+          </div>
+        </p>
 
         <button type="button" class="btn btn-primary" data-bind="click: reloadData">
         Update
         </button>
 
         <div class="panel panel-default">
-        <!-- Default panel contents -->
-        <div class="panel-heading">Current items</div>
+        
         <div class="panel-body">
-        <p>
-          <div data-bind="text: state_data().length"></div>
-        </p>
         </div>
           <table class="table table-hover">
             <thead>
@@ -88,11 +92,16 @@
     {
       var self = this;
       self.state_data = ko.observableArray([]);
-
+      self.counters = ko.observableArray([]);
       self.reloadData = function()
       {
         $.getJSON("/api/state", function(data) { 
           self.state_data( data.currentItems);
+          self.counters(data.counters);
+          console.log(data.counters);
+          if(data.currentItems.length > 0){
+            setTimeout(self.reloadData, 5000); // update/poll for the moment
+          }
         });
       }
 

@@ -12,9 +12,10 @@ content_types_provided(Req, State) ->
 
 get_json(Req, State) ->
 	Data = message_store:select_all(),
-	DataNewFormat = iterate_current_items(Data, []),
-	%lager:info("~p~n", [DataNewFormat]),
-	DataAsJson = jsx:encode([{<<"currentItems">>, DataNewFormat }]),
+	CurrentItems = iterate_current_items(Data, []),
+	Metrics = folsom_metrics:get_metrics(), % move to static handle
+	MetricValues = iterate_metrics(Metrics,[]),
+	DataAsJson = jsx:encode([{<<"counters">>, MetricValues },{<<"currentItems">>, CurrentItems }]),
 	{DataAsJson, Req, State}.
 
 %helpers
@@ -32,3 +33,12 @@ current_item_to_json_format([H|_]) ->
 
 simple_date_to_binary_string(Date) ->
 	list_to_binary(dh_date:format("D, M Y h:i:s",Date)).
+
+iterate_metrics([], Acc) ->
+	Acc;
+iterate_metrics([H|T], Acc) -> 
+	iterate_metrics(T, [ metric_to_json_format(H) | Acc]).
+
+metric_to_json_format(MetricName) ->
+	[{ <<"key">>, atom_to_binary(MetricName,utf8) },{ <<"value">>, folsom_metrics:get_metric_value(MetricName)}].
+
