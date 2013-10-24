@@ -13,7 +13,7 @@ start(_StartType, _StartArgs) ->
     Dispatch  = cowboy_router:compile(Routes),
     Port      = port(),
     TransOpts = [{port, Port}],
-    ProtoOpts = [{env, [{dispatch, Dispatch}]}],
+    ProtoOpts = [{compress, true},{env, [{dispatch, Dispatch}]}],
     {ok, _}   = cowboy:start_http(http, ?C_ACCEPTORS, TransOpts, ProtoOpts),
 
 	message_store:init(),
