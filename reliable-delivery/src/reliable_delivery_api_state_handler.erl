@@ -31,4 +31,4 @@ current_item_to_json_format([H|_]) ->
 	].
 
 simple_date_to_binary_string(Date) ->
-	list_to_binary(dh_date:format("D, M Y h:m:s",Date)).
+	list_to_binary(dh_date:format("D, M Y h:i:s",Date)).
