@@ -8,11 +8,11 @@ start() ->
 	ok = application:start(crypto),
     ok = application:start(ranch),
     ok = application:start(cowboy),
-	application:start(reliable_delivery).
+	ok = application:start(reliable_delivery).
 
 
 monitor(Identifier, LeaseTime, Value) ->
-	{ok,Pid} = reliable_delivery_sup:start_monitor(Identifier, LeaseTime),
+	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
 	message_store:insert(Identifier, Pid, Value, LeaseTime),
 	folsom_metrics:new_counter(monitored_items_total),
 	folsom_metrics:notify({monitored_items_total, {inc, 1}}),

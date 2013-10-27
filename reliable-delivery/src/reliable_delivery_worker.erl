@@ -1,7 +1,7 @@
 -module (reliable_delivery_worker).
--compile(export_all).
 
 -behaviour(gen_server).
+-export([start/2,state/1,notify_acked/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").

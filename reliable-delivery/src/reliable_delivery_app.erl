@@ -18,6 +18,8 @@ start(_StartType, _StartArgs) ->
 
 	message_store:init(),
     reliable_delivery_sup:start_link().
+
+
 stop(_State) ->
     ok.
 
