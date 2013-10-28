@@ -1,6 +1,6 @@
 -module (reliable_delivery).
 
--export ([start/0, monitor/3, ack/1, callback/3]).
+-export ([start/0, monitor/2, ack/1, callback/3]).
 
 start() ->
 	lager:start(),
@@ -11,24 +11,25 @@ start() ->
 	ok = application:start(reliable_delivery).
 
 
-monitor(Identifier, LeaseTime, Value) ->
+monitor(LeaseTime, Value) ->
+	Identifier = reliable_delivery_uuid:binary( reliable_delivery_uuid:gen(), "monitor" ),
 	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
 	message_store:insert(Identifier, Pid, Value, LeaseTime),
 	folsom_metrics:new_counter(monitored_items_total),
 	folsom_metrics:notify({monitored_items_total, {inc, 1}}),
-	{info, ok}.
+	{ok, Identifier}.
 
 ack(Identifier) ->
 	case message_store:lookup(Identifier) of
 		{error,not_found} ->
 			folsom_metrics:new_counter(monitored_items_missed_ack),
 	        folsom_metrics:notify({monitored_items_missed_ack, {inc, 1}}),
-			{info, key_not_found};
+			{error, key_not_found};
 		{ok, Pid, _ , _ , _} ->
 			reliable_delivery_worker:notify_acked(Pid),
 			folsom_metrics:new_counter(monitored_items_acked),
 	        folsom_metrics:notify({monitored_items_acked, {inc, 1}}),
-			{info, ok}
+			{ok, info}
 	end.
 
 callback(already_expired, Identifier, none) ->

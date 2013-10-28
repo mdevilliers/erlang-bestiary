@@ -13,7 +13,7 @@ content_types_provided(Req, State) ->
 get_json(Req, State) ->
 	Data = message_store:select_all(),
 	CurrentItems = iterate_current_items(Data, []),
-	Metrics = folsom_metrics:get_metrics(), % move to static handle
+	Metrics = folsom_metrics:get_metrics(), % move to static handler
 	MetricValues = iterate_metrics(Metrics,[]),
 	DataAsJson = jsx:encode([{<<"counters">>, MetricValues },{<<"currentItems">>, CurrentItems }]),
 	{DataAsJson, Req, State}.
