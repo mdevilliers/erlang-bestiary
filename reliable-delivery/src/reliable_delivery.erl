@@ -7,19 +7,6 @@
 -type identifier() :: binary().
 
 -spec start() -> ok.
-
--spec monitor( LeaseTime , Value) -> {ok, Identifier} when 
-	LeaseTime :: leaseTime(),
-	Value :: value(),
-	Identifier :: identifier().
-
--spec ack(Identifier) -> {error,key_not_found} | {ok,info} when
-	Identifier :: identifier().
-
--spec callback( already_expired | expired, Identifier, Value | none) -> ok when
-	Identifier :: identifier(),	
-	Value :: value().
-
 start() ->
 	lager:start(),
 	ok = application:start(folsom),
@@ -28,6 +15,11 @@ start() ->
     ok = application:start(cowboy),
 	ok = application:start(reliable_delivery).
 
+-spec monitor( LeaseTime , Value) -> {ok, Identifier} when 
+	LeaseTime :: leaseTime(),
+	Value :: value(),
+	Identifier :: identifier().
+
 monitor(LeaseTime, Value) ->
 	Identifier = reliable_delivery_uuid:binary( reliable_delivery_uuid:gen(), "monitor" ),
 	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
@@ -35,6 +27,9 @@ monitor(LeaseTime, Value) ->
 	folsom_metrics:new_counter(monitored_items_total),
 	folsom_metrics:notify({monitored_items_total, {inc, 1}}),
 	{ok, Identifier}.
+
+-spec ack(Identifier) -> {error,key_not_found} | {ok,info} when
+	Identifier :: identifier().
 
 ack(Identifier) ->
 	case message_store:lookup(Identifier) of
@@ -49,6 +44,10 @@ ack(Identifier) ->
 			{ok, info}
 	end.
 
+-spec callback( already_expired | expired, Identifier, Value | none) -> ok when
+	Identifier :: identifier(),	
+	Value :: value().
+	
 callback(already_expired, Identifier, none) ->
 	folsom_metrics:new_counter(monitored_items_already_expired),
 	folsom_metrics:notify({monitored_items_already_expired, {inc, 1}}),
