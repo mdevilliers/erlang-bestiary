@@ -2,6 +2,24 @@
 
 -export ([start/0, monitor/2, ack/1, callback/3]).
 
+-type leaseTime() :: integer().
+-type value() :: binary().
+-type identifier() :: binary().
+
+-spec start() -> ok.
+
+-spec monitor( LeaseTime , Value) -> {ok, Identifier} when 
+	LeaseTime :: leaseTime(),
+	Value :: value(),
+	Identifier :: identifier().
+
+-spec ack(Identifier) -> {error,key_not_found} | {ok,info} when
+	Identifier :: identifier().
+
+-spec callback( already_expired | expired, Identifier, Value | none) -> ok when
+	Identifier :: identifier(),	
+	Value :: value().
+
 start() ->
 	lager:start(),
 	ok = application:start(folsom),
@@ -9,7 +27,6 @@ start() ->
     ok = application:start(ranch),
     ok = application:start(cowboy),
 	ok = application:start(reliable_delivery).
-
 
 monitor(LeaseTime, Value) ->
 	Identifier = reliable_delivery_uuid:binary( reliable_delivery_uuid:gen(), "monitor" ),
