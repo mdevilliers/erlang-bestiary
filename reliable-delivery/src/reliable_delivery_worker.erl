@@ -57,13 +57,12 @@ handle_info(timeout, State) ->
   {stop, normal,State};
 
 handle_info(_Info, State) ->
-   lager:info("info ~p, ~p.", [_Info, State]),
   {noreply, State}.
 
 terminate(_Reason, State) ->
   Identifier = State#lease.identifier,
   message_store:delete(Identifier),
-   lager:info("terminate ~p, ~p", [_Reason, State]),
+  folsom_metrics:notify({monitored_items_current, {dec, 1}}),
   ok.
 
 code_change(_, State, _) ->

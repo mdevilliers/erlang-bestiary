@@ -44,7 +44,6 @@
 
       <div class="starter-template">
         <p>
-          <h2><span data-bind="text: state_data().length"></span></h2>
           <div data-bind="foreach: counters" >
             <h3>
               <span data-bind="text: key" ></span> : 
@@ -53,34 +52,10 @@
           </div>
         </p>
 
-        <button type="button" class="btn btn-primary" data-bind="click: reloadData">
+        <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: toggleAutoReload">
         Update
         </button>
 
-        <div class="panel panel-default">
-        
-        <div class="panel-body">
-        </div>
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Identifier</th>
-                <th>Created</th>
-                <th>Timeout</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody data-bind="foreach: state_data">
-              <tr >
-                <td><p data-bind="text: $data.identifier"></p></td>
-                <td><p data-bind="text: $data.created"></p></td>
-                <td><p data-bind="text: $data.timeout"></p></td>
-                <td><p data-bind="text: $data.value"></p></td>
-              </tr>
-            </tbody>
-          </table>
-      </div>
-    </div>
     </div><!-- /.container -->
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
@@ -91,15 +66,20 @@
     function viewModel ()
     {
       var self = this;
-      self.state_data = ko.observableArray([]);
       self.counters = ko.observableArray([]);
+      self.autoReload = ko.observable(false);
+      self.toggleAutoReload = function()
+      {
+        self.autoReload = !self.autoReload;
+        self.reloadData();
+      };
+
       self.reloadData = function()
       {
         $.getJSON("/api/state", function(data) { 
-          self.state_data( data.currentItems);
           self.counters(data.counters);
           console.log(data.counters);
-          if(data.currentItems.length > 0){
+          if( self.autoReload){
             setTimeout(self.reloadData, 5000); // update/poll for the moment
           }
         });

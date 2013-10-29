@@ -25,7 +25,9 @@ monitor(LeaseTime, Value) ->
 	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
 	message_store:insert(Identifier, Pid, Value, LeaseTime),
 	folsom_metrics:new_counter(monitored_items_total),
+	folsom_metrics:new_counter(monitored_items_current),
 	folsom_metrics:notify({monitored_items_total, {inc, 1}}),
+	folsom_metrics:notify({monitored_items_current, {inc, 1}}),
 	{ok, Identifier}.
 
 -spec ack(Identifier) -> {error,key_not_found} | {ok,info} when
@@ -34,8 +36,8 @@ monitor(LeaseTime, Value) ->
 ack(Identifier) ->
 	case message_store:lookup(Identifier) of
 		{error,not_found} ->
-			folsom_metrics:new_counter(monitored_items_missed_ack),
-	        folsom_metrics:notify({monitored_items_missed_ack, {inc, 1}}),
+			folsom_metrics:new_counter(monitored_items_unknown),
+	        folsom_metrics:notify({monitored_items_unknown, {inc, 1}}),
 			{error, key_not_found};
 		{ok, Pid, _ , _ , _} ->
 			reliable_delivery_worker:notify_acked(Pid),
