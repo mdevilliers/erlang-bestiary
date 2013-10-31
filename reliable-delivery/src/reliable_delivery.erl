@@ -23,7 +23,7 @@ start() ->
 monitor(LeaseTime, Value) ->
 	Identifier = reliable_delivery_uuid:binary( reliable_delivery_uuid:gen(), "monitor" ),
 	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
-	message_store:insert(Identifier, Pid, Value, LeaseTime),
+	reliable_delivery_monitor_store:insert(Identifier, Pid, Value, LeaseTime),
 	folsom_metrics:new_counter(monitored_items_total),
 	folsom_metrics:new_counter(monitored_items_current),
 	folsom_metrics:notify({monitored_items_total, {inc, 1}}),
@@ -34,7 +34,7 @@ monitor(LeaseTime, Value) ->
 	Identifier :: identifier().
 
 ack(Identifier) ->
-	case message_store:lookup(Identifier) of
+	case reliable_delivery_monitor_store:lookup(Identifier) of
 		{error,not_found} ->
 			folsom_metrics:new_counter(monitored_items_unknown),
 	        folsom_metrics:notify({monitored_items_unknown, {inc, 1}}),

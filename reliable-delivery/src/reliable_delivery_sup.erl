@@ -18,5 +18,8 @@ init([]) ->
 						{reliable_delivery_monitor_sup, start_link, []}, 
 					 	 permanent, infinity, supervisor, []},
 
-    {ok, { {one_for_one, 5, 10}, [UUidWorker,WorkerSupervisor]} }.
+	MonitorStore = {reliable_delivery_monitor_store,
+					{reliable_delivery_monitor_store, start_link, []},
+					permanent,1000, worker,[]},
 
+    {ok, { {one_for_one, 5, 10}, [UUidWorker,WorkerSupervisor,MonitorStore]} }.
