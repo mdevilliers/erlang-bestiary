@@ -22,4 +22,8 @@ init([]) ->
 					{reliable_delivery_monitor_store, start_link, []},
 					permanent,1000, worker,[]},
 
-    {ok, { {one_for_one, 5, 10}, [UUidWorker,WorkerSupervisor,MonitorStore]} }.
+	StatsWorker = {reliable_delivery_monitor_stats,
+					{reliable_delivery_monitor_stats,start_link,[]},
+					permanent,1000,worker,[]},
+
+    {ok, { {one_for_one, 5, 10}, [UUidWorker,WorkerSupervisor,MonitorStore,StatsWorker]} }.

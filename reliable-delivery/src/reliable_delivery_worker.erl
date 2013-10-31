@@ -49,7 +49,7 @@ handle_info(timeout, State) ->
     {ok, _, Value, _, _} ->
       reliable_delivery:callback(expired, Identifier, Value);
     {error, not_found} ->
-      reliable_delivery:callback(already_expired, Identifier, none)
+      reliable_delivery:callback(unknown, Identifier, none)
   end,
   {stop, normal,State};
 
@@ -59,7 +59,7 @@ handle_info(_Info, State) ->
 terminate(_Reason, State) ->
   Identifier = State#lease.identifier,
   reliable_delivery_monitor_store:delete(Identifier),
-  folsom_metrics:notify({monitored_items_current, {dec, 1}}),
+  reliable_delivery_monitor_stats:decrement_current_monitors(),
   ok.
 
 code_change(_, State, _) ->

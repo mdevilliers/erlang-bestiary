@@ -24,10 +24,10 @@ monitor(LeaseTime, Value) ->
 	Identifier = reliable_delivery_uuid:binary( reliable_delivery_uuid:gen(), "monitor" ),
 	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
 	reliable_delivery_monitor_store:insert(Identifier, Pid, Value, LeaseTime),
-	folsom_metrics:new_counter(monitored_items_total),
-	folsom_metrics:new_counter(monitored_items_current),
-	folsom_metrics:notify({monitored_items_total, {inc, 1}}),
-	folsom_metrics:notify({monitored_items_current, {inc, 1}}),
+
+	reliable_delivery_monitor_stats:increment_total_monitors(),
+	reliable_delivery_monitor_stats:increment_current_monitors(),
+	
 	{ok, Identifier}.
 
 -spec ack(Identifier) -> {error, {identifier_not_found, Identifier }} | {ok,{ identifier, Identifier}} when
@@ -36,27 +36,23 @@ monitor(LeaseTime, Value) ->
 ack(Identifier) ->
 	case reliable_delivery_monitor_store:lookup(Identifier) of
 		{error,not_found} ->
-			folsom_metrics:new_counter(monitored_items_unknown),
-	        folsom_metrics:notify({monitored_items_unknown, {inc, 1}}),
+			reliable_delivery_monitor_stats:increment_unknown_monitors(),
 			{error, {identifier_not_found, Identifier }};
 		{ok, Pid, _ , _ , _} ->
 			reliable_delivery_worker:notify_acked(Pid),
-			folsom_metrics:new_counter(monitored_items_acked),
-	        folsom_metrics:notify({monitored_items_acked, {inc, 1}}),
+			reliable_delivery_monitor_stats:increment_acked_monitors(),
 			{ok,{ identifier, Identifier} }
 	end.
 
--spec callback( already_expired | expired, Identifier, Value | none) -> ok when
+-spec callback( unknown | expired, Identifier, Value | none) -> ok when
 	Identifier :: identifier(),	
 	Value :: value().
 	
-callback(already_expired, Identifier, none) ->
-	folsom_metrics:new_counter(monitored_items_already_expired),
-	folsom_metrics:notify({monitored_items_already_expired, {inc, 1}}),
+callback(unknown, Identifier, none) ->
+	reliable_delivery_monitor_stats:increment_unknown_monitors(),
 	lager:info("Callback : ~p, ~p, ~p.~n", [already_expired , Identifier, none]),
 	ok;
 callback(expired, Identifier, _Value) ->
-	folsom_metrics:new_counter(monitored_items_expired),
-	folsom_metrics:notify({monitored_items_expired, {inc, 1}}),
+	reliable_delivery_monitor_stats:increment_expired_monitors(),
 	lager:info("Callback : ~p, ~p, [Value not shown].~n", [expired , Identifier]),
 	ok.
