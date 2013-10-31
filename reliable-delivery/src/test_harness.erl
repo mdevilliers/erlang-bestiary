@@ -6,14 +6,16 @@
 start(0) ->
 	ok;
 start(Iterations) ->
+	random:seed(now()),
 	spawn(?MODULE, do_start, [500]),
 	start(Iterations-1).
 
 do_start(0) ->
 	ok;
 do_start(Number) ->
-	Random = random:uniform(1000000),
-	{ok, Identifier} = reliable_delivery:monitor(Random , pad_to(125, <<"data">>)),
+	random:seed(now()),
+	Random = random:uniform(60 * 1000), % 60 seconds max
+	{ok, Identifier} = reliable_delivery:monitor(Random , pad_to(1024, <<"data">>)),
 
 	case mod(Random,2) of
 		0  ->
@@ -24,6 +26,7 @@ do_start(Number) ->
 	end.
 
 do_ack(Identifier, Timeout) ->
+	random:seed(now()),
 	timer:sleep(random:uniform(Timeout)),
 	reliable_delivery:ack(Identifier).
 

@@ -18,7 +18,7 @@ notify_acked(Pid) ->
   gen_server:call(Pid, acked).
 
 init([Identifier,LeaseTime]) ->
-   lager:info("Worker : Identifier : ~p, LeaseTime : ~p. ~n", [Identifier, LeaseTime]),
+  lager:info("Worker : Identifier : ~p, LeaseTime : ~p. ~n", [Identifier, LeaseTime]),
 
   Now = calendar:local_time(),
   StartTime = calendar:datetime_to_gregorian_seconds(Now),
@@ -37,15 +37,12 @@ handle_call(acked, _From, State) ->
 
 % others
 handle_call(_Request, _From, State) ->
-  lager:info("call ~p, ~p, ~p.", [_Request, _From, State]),
   {reply, ok, State}.
 
 handle_cast(_Msg, State) ->
-  lager:info("cast ~p, ~p.", [_Msg, State]),
   {noreply, State}.
 
 handle_info(timeout, State) ->
-
   Identifier = State#lease.identifier,
 
   case reliable_delivery_monitor_store:lookup(Identifier) of

@@ -55,11 +55,16 @@
         <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: toggleAutoReload">
         Update
         </button>
+        <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: startMonitor">
+        Start Monitor
+        </button>
 
     </div><!-- /.container -->
+    
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
     <script src="assets/js/knockout-3.0.0rc.js"></script>
+    <script src="assets/js/bullet.js"></script>
 
     <script type="text/javascript">
 
@@ -68,6 +73,12 @@
       var self = this;
       self.counters = ko.observableArray([]);
       self.autoReload = ko.observable(false);
+      
+      self.startMonitor = function()
+      {
+        bullet.send ( JSON.stringify( { monitor : { duration : 10000, value : 'my message returned in 10 seconds' }} ));
+      };
+
       self.toggleAutoReload = function()
       {
         self.autoReload = !self.autoReload;
@@ -89,7 +100,33 @@
     }
  
     ko.applyBindings(new viewModel());
-
+    
+    var bullet;
+    
+    $(document).ready(function(){
+    
+        bullet = $.bullet('ws://localhost:8180/api/bullet');
+        
+        bullet.onopen = function(){
+            console.log('bullet: opened');
+        };
+        
+        bullet.ondisconnect = function(){
+            console.log('bullet: disconnected');
+        };
+        
+        bullet.onclose = function(){
+            console.log('bullet: closed');
+        };
+        
+        bullet.onmessage = function(e){
+            console.log(e.data);
+        };
+        
+        bullet.onheartbeat = function(){
+           // bullet.send('ping');
+        };
+    });
 
     </script>
   </body>

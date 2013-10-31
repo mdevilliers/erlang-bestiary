@@ -26,6 +26,7 @@ stop(_State) ->
 routes() ->
     [
      {'_', [
+            {"/api/bullet", bullet_handler , [{handler, reliable_delivery_api_stream_handler}]},
             {"/api/statistics", reliable_delivery_api_state_handler, []},
             {"/", cowboy_static, 
             	[

@@ -30,7 +30,7 @@ monitor(LeaseTime, Value) ->
 	folsom_metrics:notify({monitored_items_current, {inc, 1}}),
 	{ok, Identifier}.
 
--spec ack(Identifier) -> {error,key_not_found} | {ok,info} when
+-spec ack(Identifier) -> {error, {identifier_not_found, Identifier }} | {ok,{ identifier, Identifier}} when
 	Identifier :: identifier().
 
 ack(Identifier) ->
@@ -38,12 +38,12 @@ ack(Identifier) ->
 		{error,not_found} ->
 			folsom_metrics:new_counter(monitored_items_unknown),
 	        folsom_metrics:notify({monitored_items_unknown, {inc, 1}}),
-			{error, key_not_found};
+			{error, {identifier_not_found, Identifier }};
 		{ok, Pid, _ , _ , _} ->
 			reliable_delivery_worker:notify_acked(Pid),
 			folsom_metrics:new_counter(monitored_items_acked),
 	        folsom_metrics:notify({monitored_items_acked, {inc, 1}}),
-			{ok, info}
+			{ok,{ identifier, Identifier} }
 	end.
 
 -spec callback( already_expired | expired, Identifier, Value | none) -> ok when
@@ -55,8 +55,8 @@ callback(already_expired, Identifier, none) ->
 	folsom_metrics:notify({monitored_items_already_expired, {inc, 1}}),
 	lager:info("Callback : ~p, ~p, ~p.~n", [already_expired , Identifier, none]),
 	ok;
-callback(expired, Identifier, Value) ->
+callback(expired, Identifier, _Value) ->
 	folsom_metrics:new_counter(monitored_items_expired),
 	folsom_metrics:notify({monitored_items_expired, {inc, 1}}),
-	lager:info("Callback : ~p, ~p, ~p.~n", [expired , Identifier, Value]),
+	lager:info("Callback : ~p, ~p, [Value not shown].~n", [expired , Identifier]),
 	ok.
