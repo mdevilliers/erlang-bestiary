@@ -76,7 +76,7 @@
 
       self.reloadData = function()
       {
-        $.getJSON("/api/state", function(data) { 
+        $.getJSON("/api/statistics", function(data) { 
           self.counters(data.counters);
           console.log(data.counters);
           if( self.autoReload){

@@ -16,7 +16,6 @@ start(_StartType, _StartArgs) ->
     ProtoOpts = [{compress, true},{env, [{dispatch, Dispatch}]}],
     {ok, _}   = cowboy:start_http(http, ?C_ACCEPTORS, TransOpts, ProtoOpts),
 
-	message_store:init(),
     reliable_delivery_sup:start_link().
 
 
@@ -27,8 +26,7 @@ stop(_State) ->
 routes() ->
     [
      {'_', [
-           % {"/api/statistics", reliable_delivery_index_handler, []},
-            {"/api/state", reliable_delivery_api_state_handler, []},
+            {"/api/statistics", reliable_delivery_api_state_handler, []},
             {"/", cowboy_static, 
             	[
                     {directory, {priv_dir, reliable_delivery, []}},
