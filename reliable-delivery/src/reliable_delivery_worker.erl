@@ -1,20 +1,20 @@
 -module (reliable_delivery_worker).
 
 -behaviour(gen_server).
--export([start/3,notify_acked/1]).
+-export([start/4,notify_acked/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
 
 %% Public API
 
-start(Identifier, LeaseTime, Value) ->
-  gen_server:start_link(?MODULE, [Identifier, LeaseTime, Value],[]).
+start(Identifier, LeaseTime,Application, Value) ->
+  gen_server:start_link(?MODULE, [Identifier, LeaseTime, Application, Value],[]).
 
 notify_acked(Pid) ->
   gen_server:call(Pid, acked).
 
-init([Identifier,LeaseTime, Value]) ->
+init([Identifier,LeaseTime,Application,Value]) ->
 
   reliable_delivery_monitor_store:insert(Identifier, self(), Value, LeaseTime),
   
@@ -28,7 +28,8 @@ init([Identifier,LeaseTime, Value]) ->
     #lease{
       identifier = Identifier,
       lease_time = LeaseTime, 
-      start_time = StartTime
+      start_time = StartTime,
+      application = Application
   }, LeaseTime}.
 
 handle_call(acked, _From, State) ->
@@ -43,11 +44,12 @@ handle_cast(_Msg, State) ->
 
 handle_info(timeout, State) ->
   Identifier = State#lease.identifier,
-
+  Application = State#lease.application,
   case reliable_delivery_monitor_store:lookup(Identifier) of
     {ok, _, Value, _, _} ->
       reliable_delivery_monitor_stats:increment_expired_monitors(),
-      reliable_delivery:callback(expired, Identifier, Value);
+      %reliable_delivery:callback(expired, Identifier, Value);
+      try_to_send_to_connected_application(Identifier, Application, Value);
     {error, not_found} ->
       reliable_delivery_monitor_stats:increment_unknown_monitors(),
       reliable_delivery:callback(unknown, Identifier, none)
@@ -65,3 +67,11 @@ terminate(_Reason, State) ->
 
 code_change(_, State, _) ->
   {ok, State}.
+
+try_to_send_to_connected_application(Identifier,Application, Value) ->
+      case  gproc:lookup_values({p, l, {application}}) of
+        [{Pid,Application}|_]  ->
+          gproc:send(Pid, {expired, Identifier, Value});
+        [] -> 
+          lager:error("Confirmation not sent ~p~n", [Identifier])
+      end.

@@ -17,7 +17,7 @@ do_start(0) ->
 do_start(Number) ->
 	random:seed(now()),
 	Random = random:uniform(60 * 1000) + ?MIN_TIME, % 60 seconds max
-	{ok, Identifier} = reliable_delivery:monitor(Random , pad_to(1024, <<"data">>)),
+	{ok, Identifier} = reliable_delivery:monitor(Random, <<"one">>, pad_to(1024, <<"data">>)),
 
 	case mod(Random,2) of
 		0  ->

@@ -54,10 +54,12 @@
         <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: toggleAutoReload">
         Update
         </button>
+        <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: registerMonitor">
+        Register Monitor
+        </button>
         <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: startMonitor">
         Start Monitor
         </button>
-
     </div><!-- /.container -->
     
     <script src="assets/js/jquery.js"></script>
@@ -75,8 +77,12 @@
       
       self.startMonitor = function()
       {
-        bullet.send ( JSON.stringify( { monitor : { duration : 10000, value : 'my message returned in 10 seconds' }} ));
+        bullet.send ( JSON.stringify( { monitor : { application: 'one', duration : 10000, value : 'my message returned in 10 seconds' }} ));
       };
+       self.registerMonitor = function()
+      {
+        bullet.send ( JSON.stringify( { register : { application: 'one'}} ));
+      };     
 
       self.toggleAutoReload = function()
       {
