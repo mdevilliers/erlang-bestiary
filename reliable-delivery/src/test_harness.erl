@@ -3,6 +3,8 @@
 -export ([start/1]).
 -export ([do_start/1, do_ack/2]).
 
+-define (MIN_TIME, 100).
+
 start(0) ->
 	ok;
 start(Iterations) ->
@@ -14,7 +16,7 @@ do_start(0) ->
 	ok;
 do_start(Number) ->
 	random:seed(now()),
-	Random = random:uniform(60 * 1000), % 60 seconds max
+	Random = random:uniform(60 * 1000) + ?MIN_TIME, % 60 seconds max
 	{ok, Identifier} = reliable_delivery:monitor(Random , pad_to(1024, <<"data">>)),
 
 	case mod(Random,2) of
@@ -26,8 +28,7 @@ do_start(Number) ->
 	end.
 
 do_ack(Identifier, Timeout) ->
-	random:seed(now()),
-	timer:sleep(random:uniform(Timeout)),
+	timer:sleep(Timeout - ?MIN_TIME),
 	reliable_delivery:ack(Identifier).
 
 mod(X,Y)->(X rem Y + Y) rem Y. 

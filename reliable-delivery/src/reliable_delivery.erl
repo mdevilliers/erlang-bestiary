@@ -22,12 +22,7 @@ start() ->
 
 monitor(LeaseTime, Value) ->
 	Identifier = reliable_delivery_uuid:generate(),
-	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
-	reliable_delivery_monitor_store:insert(Identifier, Pid, Value, LeaseTime),
-
-	reliable_delivery_monitor_stats:increment_total_monitors(),
-	reliable_delivery_monitor_stats:increment_current_monitors(),
-	
+	{ok,_} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime, Value),
 	{ok, Identifier}.
 
 -spec ack(Identifier) -> {error, {identifier_not_found, Identifier }} | {ok,{ identifier, Identifier}} when
@@ -49,10 +44,8 @@ ack(Identifier) ->
 	Value :: value().
 	
 callback(unknown, Identifier, none) ->
-	reliable_delivery_monitor_stats:increment_unknown_monitors(),
 	lager:info("Callback : ~p, ~p, ~p.~n", [already_expired , Identifier, none]),
 	ok;
 callback(expired, Identifier, _Value) ->
-	reliable_delivery_monitor_stats:increment_expired_monitors(),
 	lager:info("Callback : ~p, ~p, [Value not shown].~n", [expired , Identifier]),
 	ok.
