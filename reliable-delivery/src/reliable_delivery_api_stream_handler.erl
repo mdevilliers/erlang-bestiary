@@ -5,10 +5,8 @@ init(_Transport, Req, _Opts, _Active) ->
     {ok, Req, []}.
 
 stream(<<MonitorRequestAsJson/binary>>, Req, State) ->
-	lager:info("~p~n", [MonitorRequestAsJson]),
 	Request = jsx:decode(MonitorRequestAsJson),
-	lager:info("~p~n", [Request]),
-	Reply  = find_command(Request),
+	Reply  = jsx:encode([{ <<"reference">>, find_command(Request)}]),
 	{reply, Reply, Req, State};
 stream(Data, Req, State) ->
 	lager:info("stream received ~s~n", [Data]),

@@ -21,7 +21,7 @@ start() ->
 	Identifier :: identifier().
 
 monitor(LeaseTime, Value) ->
-	Identifier = reliable_delivery_uuid:binary( reliable_delivery_uuid:gen(), "monitor" ),
+	Identifier = reliable_delivery_uuid:generate(),
 	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
 	reliable_delivery_monitor_store:insert(Identifier, Pid, Value, LeaseTime),
 
