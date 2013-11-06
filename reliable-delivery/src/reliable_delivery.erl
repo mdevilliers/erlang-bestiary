@@ -1,6 +1,6 @@
 -module (reliable_delivery).
 
--export ([start/0, monitor/2, ack/1, callback/3]).
+-export ([start/0, monitor/3, ack/1, callback/3]).
 
 -type leaseTime() :: integer().
 -type value() :: binary().
@@ -13,21 +13,18 @@ start() ->
 	ok = application:start(crypto),
     ok = application:start(ranch),
     ok = application:start(cowboy),
+    ok = application:start(gproc),
 	ok = application:start(reliable_delivery).
 
--spec monitor( LeaseTime , Value) -> {ok, Identifier} when 
+-spec monitor( LeaseTime ,Application, Value) -> {ok, Identifier} when 
 	LeaseTime :: leaseTime(),
+	Application :: binary(),
 	Value :: value(),
 	Identifier :: identifier().
 
-monitor(LeaseTime, Value) ->
-	Identifier = reliable_delivery_uuid:binary( reliable_delivery_uuid:gen(), "monitor" ),
-	{ok,Pid} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime),
-	reliable_delivery_monitor_store:insert(Identifier, Pid, Value, LeaseTime),
-
-	reliable_delivery_monitor_stats:increment_total_monitors(),
-	reliable_delivery_monitor_stats:increment_current_monitors(),
-	
+monitor(LeaseTime,Application, Value) ->
+	Identifier = reliable_delivery_uuid:generate(),
+	{ok,_} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime, Application, Value),
 	{ok, Identifier}.
 
 -spec ack(Identifier) -> {error, {identifier_not_found, Identifier }} | {ok,{ identifier, Identifier}} when
@@ -49,10 +46,8 @@ ack(Identifier) ->
 	Value :: value().
 	
 callback(unknown, Identifier, none) ->
-	reliable_delivery_monitor_stats:increment_unknown_monitors(),
 	lager:info("Callback : ~p, ~p, ~p.~n", [already_expired , Identifier, none]),
 	ok;
 callback(expired, Identifier, _Value) ->
-	reliable_delivery_monitor_stats:increment_expired_monitors(),
 	lager:info("Callback : ~p, ~p, [Value not shown].~n", [expired , Identifier]),
 	ok.

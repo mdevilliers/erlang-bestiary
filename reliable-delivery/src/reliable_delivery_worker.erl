@@ -1,37 +1,37 @@
 -module (reliable_delivery_worker).
 
 -behaviour(gen_server).
--export([start/2,state/1,notify_acked/1]).
+-export([start/4,notify_acked/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
 
 %% Public API
 
-start(Identifier, LeaseTime) ->
-  gen_server:start_link(?MODULE, [Identifier, LeaseTime],[]).
-
-state(Pid) ->
-  gen_server:call(Pid, state).
+start(Identifier, LeaseTime,Application, Value) ->
+  gen_server:start_link(?MODULE, [Identifier, LeaseTime, Application, Value],[]).
 
 notify_acked(Pid) ->
   gen_server:call(Pid, acked).
 
-init([Identifier,LeaseTime]) ->
-  lager:info("Worker : Identifier : ~p, LeaseTime : ~p. ~n", [Identifier, LeaseTime]),
+init([Identifier,LeaseTime,Application,Value]) ->
 
+  reliable_delivery_monitor_store:insert(Identifier, self(), Value, LeaseTime),
+  
   Now = calendar:local_time(),
   StartTime = calendar:datetime_to_gregorian_seconds(Now),
-
+  
+  reliable_delivery_monitor_stats:increment_total_monitors(),
+  reliable_delivery_monitor_stats:increment_current_monitors(),
+  
   {ok, 
     #lease{
       identifier = Identifier,
       lease_time = LeaseTime, 
-      start_time = StartTime
+      start_time = StartTime,
+      application = Application
   }, LeaseTime}.
 
-handle_call(state, _From, State) ->
-  {reply, State, State};
 handle_call(acked, _From, State) ->
   {stop, normal, ok, State};
 
@@ -44,11 +44,14 @@ handle_cast(_Msg, State) ->
 
 handle_info(timeout, State) ->
   Identifier = State#lease.identifier,
-
+  Application = State#lease.application,
   case reliable_delivery_monitor_store:lookup(Identifier) of
     {ok, _, Value, _, _} ->
-      reliable_delivery:callback(expired, Identifier, Value);
+      reliable_delivery_monitor_stats:increment_expired_monitors(),
+      %reliable_delivery:callback(expired, Identifier, Value);
+      try_to_send_to_connected_application(Identifier, Application, Value);
     {error, not_found} ->
+      reliable_delivery_monitor_stats:increment_unknown_monitors(),
       reliable_delivery:callback(unknown, Identifier, none)
   end,
   {stop, normal,State};
@@ -64,3 +67,11 @@ terminate(_Reason, State) ->
 
 code_change(_, State, _) ->
   {ok, State}.
+
+try_to_send_to_connected_application(Identifier,Application, Value) ->
+      case  gproc:lookup_values({p, l, {application}}) of
+        [{Pid,Application}|_]  ->
+          gproc:send(Pid, {expired, Identifier, Value});
+        [] -> 
+          lager:error("Confirmation not sent ~p~n", [Identifier])
+      end.
