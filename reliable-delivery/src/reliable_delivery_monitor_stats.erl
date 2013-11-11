@@ -9,6 +9,8 @@
 			increment_unknown_monitors/0, 
 			increment_acked_monitors/0,
 			increment_expired_monitors/0,
+			increment_expired_acknowledgement_delivery_failed/0,
+			increment_expired_acknowledgement_delivery_succeded/0,
 			all_metrics_with_values/0
 		]).
 
@@ -36,6 +38,12 @@ increment_acked_monitors() ->
 increment_expired_monitors() ->
 	increment(monitored_items_expired).
 
+increment_expired_acknowledgement_delivery_failed() ->
+	increment(expired_acknowledgement_delivery_failed).
+
+increment_expired_acknowledgement_delivery_succeded() ->
+	increment(expired_acknowledgement_delivery_succeded).
+
 all_metrics_with_values() ->
 	DisplayValues = accumultate_metrics_for_display(stats(),[]),
 	DisplayValues.
@@ -49,12 +57,14 @@ decrement(Name) ->
 % list of all stats in form {type, name, displayname, description}
 stats() ->
 	[	
-		{counter, monitored_items_total, <<"Total items">>, <<"Culmitive total of all items monitored.">>},
-		{counter, monitored_items_current, <<"Current items">>, <<"Current total items monitored.">>},
+		{counter, expired_acknowledgement_delivery_failed, <<"Total failed item failure delivery">>, <<"Failed in delivering expired item notification.">>},
+		{counter, expired_acknowledgement_delivery_succeded, <<"Total successful item failure delivery">>, <<"Succeded in delivering expired item notification.">>},
 		{counter, monitored_items_unknown, <<"Unknown items">>, <<"Unknown items - maybe expired, maybe unknown identifiers.">>},
 		{counter, monitored_items_acked, <<"Acked items">>, <<"Total monitored items confirmed.">>},
-		{counter, monitored_items_expired, <<"Expired items">>, <<"Total expired items.">>}
-	].
+		{counter, monitored_items_expired, <<"Expired items">>, <<"Total expired items.">>},
+		{counter, monitored_items_current, <<"Current items">>, <<"Current total items monitored.">>},
+		{counter, monitored_items_total, <<"Total items">>, <<"Culmitive total of all items monitored.">>}
+		].
 
 iterate_stats(Stat,[]) ->
 	create_stat(Stat),

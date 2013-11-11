@@ -1,31 +1,51 @@
+Get going
+---------
+
+rebar.cmd get-deps
+rebar.cmd compile
 
 
-Compile -
+Compile just this project
+-------------------------
 
 rebar.cmd compile skip_deps=true
 
 
-windows
+Run on windows
+--------------
+
 
 erl -pa ebin \deps\lager\ebin \deps\goldrush\ebin \deps\folsom\ebin \deps\meck\ebin \deps\bear\ebin \deps\ranch\ebin \deps\cowboy\ebin deps\jsx\ebin deps\dh_date\ebin deps\mimetypes\ebin deps\bullet\ebin deps\uuid\ebin deps\quickrand\ebin deps\gproc\ebin -s reliable_delivery
 
-linux
+Run on linux
+-------------
 
 erl -pa ebin deps/*/ebin -s reliable_delivery
 
+
+Demo api
+--------
+
 ```
 reliable_delivery:start().
-reliable_delivery:monitor(5000,<<"my value">>).
+{ok, Identifier} =  reliable_delivery:monitor(5000,<<"my application name">>, <<"my value">>).
 
-reliable_delivery_monitor_store:lookup(c).
+% then
 
-% or 
+reliable_delivery:ack(Identifier).
 
-reliable_delivery:ack(<<"myuniqueidentifier">>).
 
 ```
 
-Test api
+Run test harness
+----------------
+
+```
+test_harness:start(1).
+```
+
+
+Test web api
 --------
 
 curl -i -H "Accept: application/json" -X GET http://localhost:8180/api/statistics

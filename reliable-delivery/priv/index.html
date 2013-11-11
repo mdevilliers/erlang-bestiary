@@ -43,23 +43,29 @@
     <div class="container">
 
       <div class="starter-template">
+
         <p>
-          <div data-bind="foreach: counters" >
-            <h3><span data-bind="text: value" ></span></h3>
-            <h4><span data-bind="text: name" ></span></h4> 
-            <h6><span data-bind="text: description" ></span></h6> 
+
+          <div class="row"  data-bind="foreach: counters">
+            <div class="col-md-4" >
+              <h3><span data-bind="text: value" ></span></h3>
+              <h4><span data-bind="text: name" ></span></h4> 
+              <h6><span data-bind="text: description" ></span></h6> 
+            </div>
           </div>
         </p>
 
         <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: toggleAutoReload">
         Update
         </button>
-        <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: registerMonitor">
+        <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="visible : showMonitorRegisteredButton , click: registerMonitor">
         Register Monitor
         </button>
-        <button type="button" class="btn btn-primary"  data-toggle="button" data-bind="click: startMonitor">
+        <button type="button" class="btn btn-primary"  data-toggle="button" data-bind=" click: startMonitor">
         Start Monitor
         </button>
+        <h6>Monitor Registered : <span data-bind="text: monitorRegistered" ></span></h6>
+        <p data-bind="text: lastMonitorMessage"></p>
     </div><!-- /.container -->
     
     <script src="assets/js/jquery.js"></script>
@@ -74,19 +80,28 @@
       var self = this;
       self.counters = ko.observableArray([]);
       self.autoReload = ko.observable(false);
-      
+      self.monitorRegistered = ko.observable(false);
+
+      self.showMonitorRegisteredButton =  ko.computed(function() 
+      { return ! self.monitorRegistered(); }, this);
+
+      self.lastMonitorMessage = ko.observable("");
+
       self.startMonitor = function()
       {
         bullet.send ( JSON.stringify( { monitor : { application: 'one', duration : 10000, value : 'my message returned in 10 seconds' }} ));
       };
        self.registerMonitor = function()
       {
+        var ismonitored = true;
+        self.monitorRegistered(ismonitored);
+
         bullet.send ( JSON.stringify( { register : { application: 'one'}} ));
       };     
 
       self.toggleAutoReload = function()
       {
-        self.autoReload = !self.autoReload;
+        self.autoReload(!self.autoReload);
         self.reloadData();
       };
 
@@ -94,7 +109,7 @@
       {
         $.getJSON("/api/statistics", function(data) { 
           self.counters(data.counters);
-          console.log(data.counters);
+          //console.log(data.counters);
           if( self.autoReload){
             setTimeout(self.reloadData, 5000); // update/poll for the moment
           }
@@ -103,8 +118,8 @@
 
       self.reloadData();
     }
- 
-    ko.applyBindings(new viewModel());
+    var viewModel = new viewModel();
+    ko.applyBindings(viewModel);
     
     var bullet;
     
@@ -114,6 +129,10 @@
         
         bullet.onopen = function(){
             console.log('bullet: opened');
+            if(viewModel.monitorRegistered())
+            {
+              viewModel.registerMonitor();
+            }
         };
         
         bullet.ondisconnect = function(){
@@ -126,6 +145,7 @@
         
         bullet.onmessage = function(e){
             console.log(e.data);
+            viewModel.lastMonitorMessage(e.data);
         };
         
         bullet.onheartbeat = function(){
