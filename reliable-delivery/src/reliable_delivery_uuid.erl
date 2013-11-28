@@ -17,8 +17,6 @@ generate() ->
 init([]) ->
     {ok, []}.
 
-handle_call(serial, _From, State) ->
-  {reply, State, State};
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
