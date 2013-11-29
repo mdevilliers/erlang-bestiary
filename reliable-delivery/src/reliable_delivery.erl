@@ -2,6 +2,8 @@
 
 -export ([start/0, monitor/3, ack/1, callback/3]).
 
+-include ("reliable_delivery.hrl").
+
 -type leaseTime() :: integer().
 -type value() :: binary().
 -type identifier() :: binary().
@@ -22,6 +24,11 @@ start() ->
 	Value :: value(),
 	Identifier :: identifier().
 
+monitor(LeaseTime,_, _) when LeaseTime > ?BUCKET_TIMESPAN_MS ->
+	Identifier = reliable_delivery_uuid:generate(),
+	% TODO
+	io:format("Saving monitor with LeaseTime : ~p~n",[LeaseTime]),
+	{ok, Identifier};
 monitor(LeaseTime,Application, Value) ->
 	Identifier = reliable_delivery_uuid:generate(),
 	{ok,_} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime, Application, Value),
