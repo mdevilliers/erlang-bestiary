@@ -10,8 +10,8 @@ start_link() ->
 
 init([]) ->
 
-	TickWorker =  {reliable_delivery_ticker, 
-					{reliable_delivery_ticker, start_link, []}, 
+	BucketManager =  {reliable_delivery_bucket_manager, 
+					{reliable_delivery_bucket_manager, start_link, []}, 
 					permanent , 1000, worker, []},
 
 	UUidWorker = {reliable_delivery_uuid, 
@@ -34,4 +34,4 @@ init([]) ->
 					{reliable_delivery_monitor_stats,start_link,[]},
 					permanent,1000,worker,[]},
 
-    {ok, { {one_for_one, 5, 10}, [TickWorker, UUidWorker, WorkerSupervisor, RedisStore, MonitorStore, StatsWorker]} }.
+    {ok, { {one_for_one, 5, 10}, [BucketManager, UUidWorker, WorkerSupervisor, RedisStore, MonitorStore, StatsWorker]} }.

@@ -1,4 +1,4 @@
--module (reliable_delivery_ticker).
+-module (reliable_delivery_bucket_manager).
 
 -behaviour(gen_server).
 
