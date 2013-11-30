@@ -5,7 +5,7 @@
 % Find the sum of all the multiples of 3 or 5 below 1000.
 
 euler() ->
-	euler(999).
+	euler(1000).
 euler(N) ->
 	solve(N - 1,0).
 
