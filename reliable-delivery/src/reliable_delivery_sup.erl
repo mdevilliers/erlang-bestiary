@@ -22,6 +22,10 @@ init([]) ->
 						{reliable_delivery_monitor_sup, start_link, []}, 
 					 	 permanent, infinity, supervisor, []},
 
+	RedisStore = {reliable_delivery_monitor_store_redis,
+					{reliable_delivery_monitor_store_redis, start_link, []},
+					permanent,1000, worker,[]},
+					 	 
 	MonitorStore = {reliable_delivery_monitor_store,
 					{reliable_delivery_monitor_store, start_link, []},
 					permanent,1000, worker,[]},
@@ -30,4 +34,4 @@ init([]) ->
 					{reliable_delivery_monitor_stats,start_link,[]},
 					permanent,1000,worker,[]},
 
-    {ok, { {one_for_one, 5, 10}, [TickWorker, UUidWorker, WorkerSupervisor, MonitorStore, StatsWorker]} }.
+    {ok, { {one_for_one, 5, 10}, [TickWorker, UUidWorker, WorkerSupervisor, RedisStore, MonitorStore, StatsWorker]} }.

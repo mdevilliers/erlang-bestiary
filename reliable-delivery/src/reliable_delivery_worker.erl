@@ -16,8 +16,7 @@ init([Identifier,LeaseTime,Application,Value]) ->
 
   reliable_delivery_monitor_store:insert(Identifier, self(), Value, LeaseTime),
 
-  Now = calendar:local_time(),
-  StartTime = calendar:datetime_to_gregorian_seconds(Now),
+  StartTime = time_util:now_in_seconds(),
   
   reliable_delivery_monitor_stats:increment_total_monitors(),
   reliable_delivery_monitor_stats:increment_current_monitors(),

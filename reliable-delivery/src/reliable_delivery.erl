@@ -24,14 +24,10 @@ start() ->
 	Value :: value(),
 	Identifier :: identifier().
 
-monitor(LeaseTime,_, _) when LeaseTime > ?BUCKET_TIMESPAN_MS ->
+monitor(LeaseTime, Application, Value) ->
 	Identifier = reliable_delivery_uuid:generate(),
-	% TODO
-	io:format("Saving monitor with LeaseTime : ~p~n",[LeaseTime]),
-	{ok, Identifier};
-monitor(LeaseTime,Application, Value) ->
-	Identifier = reliable_delivery_uuid:generate(),
-	{ok,_} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime, Application, Value),
+	%{ok,_} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime, Application, Value),
+	reliable_delivery_monitor_store_redis:push_to_bucket(Identifier, LeaseTime, Application, Value),
 	{ok, Identifier}.
 
 -spec ack(Identifier) -> {error, {identifier_not_found, Identifier }} | {ok,{ identifier, Identifier}} when
