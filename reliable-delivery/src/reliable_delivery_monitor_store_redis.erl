@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export ([start_link/0, push_to_bucket/4, pop_from_bucket/1]).
+-export ([start_link/0, push_to_bucket/4, pop_from_bucket/1, ack_with_identifier/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 %% Public API
@@ -15,21 +15,46 @@ push_to_bucket(Identifier, LeaseTime,Application, Value) ->
 pop_from_bucket(Bucket) ->
 	gen_server:call(?MODULE, {pop, Bucket}).
 
+ack_with_identifier(Identifier) ->
+	gen_server:call(?MODULE, {ack, Identifier}).
+
 init([]) ->
   	{ok, ERedisPid} = eredis:start_link(),
   	{ok, ERedisPid}.
 
+handle_call({ack, Identifier}, _From, ERedisPid) ->
+
+	% TODO - error handling
+	% TODO - clean up other keys
+	
+	{ok, Bucket} = get_identifier_bucket_key (Identifier),
+	{ok, _} = eredis:q(ERedisPid, ["SREM", get_ackable_bucket_key (Bucket) , Identifier]),
+	{reply, ok ,ERedisPid};
+
 handle_call({pop, Bucket}, _From, ERedisPid) ->
-	BucketName  = get_bucket_name(Bucket),
+	BucketName  = get_bucket_key(Bucket),
 	Reply = eredis:q(ERedisPid, ["LPOP", BucketName ]),
   	{reply,Reply,ERedisPid};
 
 handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid) ->
 
 	{ bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
-	BucketName  = get_bucket_name(Bucket),
-	Reply = eredis:q(ERedisPid, ["LPUSH", BucketName , {Identifier, LeaseTime, Application, Value, OffsetInBucket}]),
-  	{reply,Reply,ERedisPid};
+	
+	%TODO - find out half of offset push to left < half , push to right > half
+	lager:info("push ~p", [Identifier]),
+	Pipeline = [
+					% push monitor to list
+					["LPUSH", get_bucket_key(Bucket) , {Identifier, LeaseTime, Application, OffsetInBucket}],
+					% add to set of identifiers to ack
+			        ["SADD", get_ackable_bucket_key (Bucket) , Identifier],
+			        % save bucket against identifer 
+			        ["SET", get_identifier_bucket_key (Identifier)  , Bucket],
+			        % save value against identifier
+			 	    ["SET", get_identifier_value_key (Identifier)  , Value]
+        		],
+	[{ok, _}, {ok, _}, {ok, _}, {ok, _}] = eredis:qp(ERedisPid, Pipeline),
+
+  	{reply, ok ,ERedisPid};
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
@@ -46,5 +71,17 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
-get_bucket_name (Bucket) ->
+get_identifier_key (Identifier) ->
+	io_lib:format("rd:id:~p",[binary_to_list(Identifier)]).
+
+get_identifier_value_key (Identifier) ->
+	get_identifier_key (Identifier) ++ ":value".
+
+get_identifier_bucket_key (Identifier) ->
+	get_identifier_key (Identifier) ++ ":bucket".
+
+get_bucket_key (Bucket) ->
 	io_lib:format("rd:bucket:~p",[Bucket]).
+
+get_ackable_bucket_key (Bucket) ->
+	io_lib:format("rd:bucket:~p:ackable",[Bucket]).
