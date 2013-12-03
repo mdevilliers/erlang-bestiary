@@ -11,6 +11,8 @@
 			increment_expired_monitors/0,
 			increment_expired_acknowledgement_delivery_failed/0,
 			increment_expired_acknowledgement_delivery_succeded/0,
+			increment_persisted_monitors/0,
+			decrement_persisted_monitors/0,
 			all_metrics_with_values/0
 		]).
 
@@ -44,6 +46,12 @@ increment_expired_acknowledgement_delivery_failed() ->
 increment_expired_acknowledgement_delivery_succeded() ->
 	increment(expired_acknowledgement_delivery_succeded).
 
+decrement_persisted_monitors() ->
+	decrement(monitored_items_persisted).
+
+increment_persisted_monitors() ->
+	increment(monitored_items_persisted).
+
 all_metrics_with_values() ->
 	DisplayValues = accumultate_metrics_for_display(stats(),[]),
 	DisplayValues.
@@ -62,6 +70,7 @@ stats() ->
 		{counter, monitored_items_unknown, <<"Unknown items">>, <<"Unknown items - maybe expired, maybe unknown identifiers.">>},
 		{counter, monitored_items_acked, <<"Acked items">>, <<"Total monitored items confirmed.">>},
 		{counter, monitored_items_expired, <<"Expired items">>, <<"Total expired items.">>},
+		{counter, monitored_items_persisted, <<"Persisted items">>, <<"Total items persisted to buckets.">>},
 		{counter, monitored_items_current, <<"Current items">>, <<"Current total items monitored.">>},
 		{counter, monitored_items_total, <<"Total items">>, <<"Culmitive total of all items monitored.">>}
 		].

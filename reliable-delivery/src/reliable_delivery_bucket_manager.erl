@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export ([start_link/0,current_bucket/0,get_bucket/1]).
+-export ([start_link/0, current_bucket/0, get_bucket/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
@@ -54,6 +54,7 @@ handle_info(trigger, #tick { start_time = StartTime, offset = Offset, bucket = B
 	case Offset1 rem ?BUCKET_TICKS_PER_BUCKET  of
 		0  ->
 			Bucket1 = Bucket + 1;
+      % gen_event:notify( bucket_info, {change, Bucket});
 		_ -> 
 			Bucket1 = Bucket
 	end,

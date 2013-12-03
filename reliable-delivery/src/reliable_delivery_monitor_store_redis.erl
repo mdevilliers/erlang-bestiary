@@ -29,6 +29,8 @@ handle_call({ack, Identifier}, _From, ERedisPid) ->
 	
 	{ok, Bucket} = get_identifier_bucket_key (Identifier),
 	{ok, _} = eredis:q(ERedisPid, ["SREM", get_ackable_bucket_key (Bucket) , Identifier]),
+
+	reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 	{reply, ok ,ERedisPid};
 
 handle_call({pop, Bucket}, _From, ERedisPid) ->
@@ -53,7 +55,7 @@ handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid)
 			 	    ["SET", get_identifier_value_key (Identifier)  , Value]
         		],
 	[{ok, _}, {ok, _}, {ok, _}, {ok, _}] = eredis:qp(ERedisPid, Pipeline),
-
+	reliable_delivery_monitor_stats:increment_persisted_monitors(),
   	{reply, ok ,ERedisPid};
 
 handle_call(_Request, _From, State) ->

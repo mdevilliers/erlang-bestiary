@@ -26,7 +26,7 @@ start() ->
 
 monitor(LeaseTime, Application, Value) ->
 	Identifier = reliable_delivery_uuid:generate(),
-	%{ok,_} = reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime, Application, Value),
+	%reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime, Application, Value),
 	reliable_delivery_monitor_store_redis:push_to_bucket(Identifier, LeaseTime, Application, Value),
 	{ok, Identifier}.
 
