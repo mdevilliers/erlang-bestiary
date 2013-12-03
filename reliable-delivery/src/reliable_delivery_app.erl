@@ -4,7 +4,7 @@
 
 -export([start/2, stop/1]).
 
--define(C_ACCEPTORS,  100).
+-define(C_ACCEPTORS,  20).
 
 start(_StartType, _StartArgs) ->
 
