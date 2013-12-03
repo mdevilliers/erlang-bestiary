@@ -86,4 +86,4 @@ get_bucket_key (Bucket) ->
 	io_lib:format("rd:bucket:~p",[Bucket]).
 
 get_ackable_bucket_key (Bucket) ->
-	io_lib:format("rd:bucket:~p:ackable",[Bucket]).
+	get_bucket_key (Bucket) ++ ":ackable".
