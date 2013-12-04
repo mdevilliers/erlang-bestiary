@@ -19,6 +19,7 @@ start_link() ->
 
 init(_) ->
 	erlang:send_after(?BUCKET_TICK_INTERVAL_MS, self(), trigger),
+  reliable_delivery_event:notify(bucket_info, {new, 0}),
 	StartTime = time_util:now_in_seconds(),
   	{ok, #tick {
   		start_time = StartTime,

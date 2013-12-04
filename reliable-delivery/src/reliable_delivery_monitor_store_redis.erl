@@ -35,7 +35,14 @@ handle_call({ack, Identifier}, _From, ERedisPid) ->
 
 handle_call({pop, Bucket}, _From, ERedisPid) ->
 	BucketName  = get_bucket_key(Bucket),
-	Reply = eredis:q(ERedisPid, ["LPOP", BucketName ]),
+
+	case eredis:q(ERedisPid, ["LPOP", BucketName ]) of
+		{ok, undefined} ->
+			Reply = {undefined};
+		{ok, Bin } ->
+			Reply = {ok, binary_to_term(Bin)}
+	end,
+
   	{reply,Reply,ERedisPid};
 
 handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid) ->
