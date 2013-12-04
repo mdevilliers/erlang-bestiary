@@ -3,14 +3,14 @@
 
 -behaviour(supervisor).
 
--export([start_link/0,start_monitor/4]).
+-export([start_link/0,start_monitor/3]).
 -export([init/1]).
 
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-start_monitor(Identifier, LeaseTime, Application, Value) ->
-	supervisor:start_child(?MODULE,[Identifier,LeaseTime, Application, Value]).
+start_monitor(Identifier, LeaseTime, Application) ->
+	supervisor:start_child(?MODULE,[Identifier,LeaseTime, Application]).
 
 init([]) ->
 	Worker = { reliable_delivery_worker,{reliable_delivery_worker, start, []},

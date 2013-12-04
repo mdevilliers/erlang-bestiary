@@ -1,20 +1,20 @@
 -module (reliable_delivery_worker).
 
 -behaviour(gen_server).
--export([start/4,notify_acked/1]).
+-export([start/3,notify_acked/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
 
-start(Identifier, LeaseTime,Application, Value) ->
-  gen_server:start_link(?MODULE, [Identifier, LeaseTime, Application,Value],[]).
+start(Identifier,LeaseTime,Application) ->
+  gen_server:start_link(?MODULE, [Identifier, LeaseTime, Application],[]).
 
 notify_acked(Pid) ->
   gen_server:call(Pid, acked).
 
-init([Identifier,LeaseTime,Application,Value]) ->
+init([Identifier,LeaseTime,Application]) ->
 
-  reliable_delivery_monitor_store:insert(Identifier, self(), Value, LeaseTime),
+ % reliable_delivery_monitor_store:insert(Identifier, self(), Value, LeaseTime),
 
   StartTime = time_util:now_in_seconds(),
   
