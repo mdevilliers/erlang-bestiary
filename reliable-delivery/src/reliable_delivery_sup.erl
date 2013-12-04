@@ -34,8 +34,4 @@ init([]) ->
 					{reliable_delivery_monitor_stats,start_link,[]},
 					permanent,1000,worker,[]},
 
-	%EventManager = {reliable_delivery_event,
-	%				{reliable_delivery_event,start_link,[]},
-	%				permanent,1000,worker,[]},
-
     {ok, { {one_for_one, 5, 10}, [BucketManager, UUidWorker, WorkerSupervisor, RedisStore, MonitorStore, StatsWorker]} }.

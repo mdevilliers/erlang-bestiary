@@ -48,23 +48,24 @@ handle_cast(_Msg, State) ->
   {noreply, State}.
 
 handle_info(trigger, #tick { start_time = StartTime, offset = Offset, bucket = Bucket}) ->
-	
 	%io:format("TicK ~p~n", [Tick]),
 	Offset1 = Offset + 1,
 	case Offset1 rem ?BUCKET_TICKS_PER_BUCKET  of
 		0  ->
-			Bucket1 = Bucket + 1;
-      % gen_event:notify( bucket_info, {change, Bucket});
+			Bucket1 = Bucket + 1,
+      reliable_delivery_event:notify(bucket_info, {new, Bucket1});
 		_ -> 
 			Bucket1 = Bucket
 	end,
+  
+  NewState = #tick {
+          start_time = StartTime,
+          offset = Offset1,
+          bucket = Bucket1},
 
 	erlang:send_after(?BUCKET_TICK_INTERVAL_MS, self(), trigger),
-	{noreply, #tick {
-  				start_time = StartTime,
-  				offset = Offset1,
-  				bucket = Bucket1
-  	}};
+	{noreply,NewState};
+
 handle_info(_Info, State) ->
   {noreply, State}.
 
@@ -73,5 +74,4 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
-
   
