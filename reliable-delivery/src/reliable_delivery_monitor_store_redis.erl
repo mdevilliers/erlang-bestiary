@@ -5,6 +5,8 @@
 -export ([start_link/0, push_to_bucket/4, pop_from_bucket/1, ack_with_identifier/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
+-include ("reliable_delivery.hrl").
+
 %% Public API
 start_link() ->
   gen_server:start({local, ?MODULE}, ?MODULE, [], []).
@@ -49,11 +51,17 @@ handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid)
 
 	{ bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
 	
-	%TODO - find out half of offset push to left < half , push to right > half
+	MiddleOffsetBucketSize = (?BUCKET_TICK_INTERVAL_MS * ?BUCKET_TICKS_PER_BUCKET) /2 ,
+
+	case (OffsetInBucket < MiddleOffsetBucketSize) of
+		true -> Operation = "LPUSH" ;
+		false -> Operation = "RPUSH" 
+	end,
+
 	lager:info("push ~p", [Identifier]),
 	Pipeline = [
 					% push monitor to list
-					["LPUSH", get_bucket_key(Bucket) , {Identifier, LeaseTime, Application, OffsetInBucket}],
+					[Operation, get_bucket_key(Bucket) , {Identifier, LeaseTime, Application, OffsetInBucket}],
 					% add to set of identifiers to ack
 			        ["SADD", get_ackable_bucket_key (Bucket) , Identifier],
 			        % save bucket against identifer 
