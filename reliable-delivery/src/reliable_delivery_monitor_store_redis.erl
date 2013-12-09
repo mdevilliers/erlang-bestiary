@@ -35,8 +35,10 @@ handle_call({get_state, Identifier}, _From, ERedisPid) ->
 			Reply = {ok, inprogress};
 		{ok, <<"acked">>} ->
 			Reply = {ok, acked};
-		{ok, <<"in_memory">>} ->
-			Reply = {ok, in_memory}
+		{ok, <<"inmemory">>} ->
+			Reply = {ok, inmemory};
+		_ ->
+			Reply = {ok, unknown}
 	end,
 	{reply, Reply ,ERedisPid};
 
@@ -48,27 +50,33 @@ handle_call({ack, Identifier}, _From, ERedisPid) ->
 
 	BucketKey = get_identifier_bucket_key (Identifier),
 	{ok, Bucket} = eredis:q(ERedisPid, ["GET", BucketKey]),
-
+	lager:info("Ack bucket - ~p~n", [Bucket]),
+	lager:info("Ack bucket key ~p~n", [get_bucket_key (binary_to_list(Bucket))]),
+	{ok, Members} = eredis:q(ERedisPid,["SMEMBERS", get_bucket_key (binary_to_list(Bucket)) ]),
+    lager:info("Ack members - ~p~n", [Members]),
 	Pipeline = [
-				% remove from ackable bucket
-				["SREM", get_ackable_bucket_key (Bucket) , Identifier],
+				% remove from bucket
+				["SREM", get_bucket_key (Bucket) , Identifier],
 				% set state to acked
  				["SET", get_identifier_state_key (Identifier)  , <<"acked">>]
 			   ],
 
-	[{ok, _}, {ok, _}] = eredis:qp(ERedisPid, Pipeline),
-
+	[{ok, _}, {ok, _}] = Reponse = eredis:qp(ERedisPid, Pipeline),
+	lager:info("Ack response - ~p~n", [Reponse]),
 	reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 	{reply, ok ,ERedisPid};
 
 handle_call({pop, Bucket}, _From, ERedisPid) ->
 	BucketName  = get_bucket_key(Bucket),
-
+    lager:info("Pop bucket key ~p~n", [get_bucket_key(Bucket)]),
 	case eredis:q(ERedisPid, ["SPOP", BucketName ]) of
 		{ok, undefined} ->
 			Reply = {undefined};
-		{ok, Bin } ->
-			Reply = {ok, binary_to_term(Bin)}
+		{ok, Identifier } ->
+			% not nice
+			eredis:q(ERedisPid,["SET", get_identifier_state_key (Identifier)  , <<"inmemory">>]),
+			{ok, Details} = eredis:q(ERedisPid,["GET", get_details_bucket_key (Identifier)]),
+			Reply = {ok, binary_to_term(Details)}
 	end,
 
   	{reply,Reply,ERedisPid};
@@ -78,9 +86,12 @@ handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid)
 	{ bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
 	
 	lager:info("push ~p into ~p with offset ~p~n", [Identifier,Bucket, OffsetInBucket]),
+	lager:info("push bucket key ~p~n", [get_bucket_key(Bucket)]),
 	Pipeline = [
 					% push monitor to list
-					["SADD", get_bucket_key(Bucket) , {Identifier, LeaseTime, Application, OffsetInBucket}],
+					["SADD", get_bucket_key(Bucket) , Identifier],
+					% add details
+			        ["SET", get_details_bucket_key (Identifier)  , {Identifier, LeaseTime, Application, OffsetInBucket}],
 					% add to set of identifiers to ack
 			        ["SET", get_identifier_bucket_key (Identifier)  , Bucket],
 			        % save value against identifier
@@ -88,7 +99,8 @@ handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid)
 			 	    % set state
 			        ["SET", get_identifier_state_key (Identifier)  , <<"inprogress">>]
         		],
-	[{ok, _}, {ok, _}, {ok, _},{ok, _}] = eredis:qp(ERedisPid, Pipeline),
+	[{ok, _}, {ok, _}, {ok, _},{ok, _},{ok, _}] = Reponse = eredis:qp(ERedisPid, Pipeline),
+	lager:info("push response - ~p~n", [Reponse]),
 	reliable_delivery_monitor_stats:increment_persisted_monitors(),
   	{reply, ok ,ERedisPid};
 
@@ -110,6 +122,9 @@ code_change(_OldVsn, State, _Extra) ->
 get_identifier_key (Identifier) ->
 	io_lib:format("_rd:id:~p",[binary_to_list(Identifier)]).
 
+get_details_bucket_key (Identifier) ->
+	get_identifier_key (Identifier) ++ ":details".
+
 get_identifier_value_key (Identifier) ->
 	get_identifier_key (Identifier) ++ ":value".
 
@@ -122,5 +137,5 @@ get_identifier_state_key (Identifier) ->
 get_bucket_key (Bucket) ->
 	io_lib:format("_rd:bucket:~p",[Bucket]).
 
-get_ackable_bucket_key (Bucket) ->
-	get_bucket_key (Bucket) ++ ":ackable".
+%get_ackable_bucket_key (Bucket) ->
+%	get_bucket_key (Bucket) ++ ":ackable".

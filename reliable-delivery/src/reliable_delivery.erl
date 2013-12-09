@@ -29,28 +29,37 @@ monitor(LeaseTime, Application, Value) ->
 	reliable_delivery_monitor_store_redis:push_to_bucket(Identifier, LeaseTime, Application, Value),
 	{ok, Identifier}.
 
--spec ack(Identifier) -> {error, {identifier_not_found, Identifier }} | {ok,{ identifier, Identifier}} when
+-spec ack(Identifier) -> {error, {identifier_not_found, Identifier }} | {already_acked,{ identifier, Identifier} } | {ok,{ identifier, Identifier}} when
 	Identifier :: identifier().
 
 ack(Identifier) ->
 
-	%case reliable_delivery_monitor_store_redis:get_state(Identifier) of
-	%	{ok, inprogress} ->
+	case reliable_delivery_monitor_store_redis:get_state(Identifier) of
+		{ok, inprogress} ->
+			lager:info("~p : ~p~n", [Identifier, inprogress]),
+			reliable_delivery_monitor_store_redis:ack_with_identifier(Identifier),
+			{ok,{ identifier, Identifier} };
 
-	%	{ok, acked} ->
+		{ok, inmemory} ->
+			lager:info("~p : ~p~n", [Identifier, inmemory]),
+			{ok, _, Pid} = reliable_delivery_monitor_store:lookup(Identifier),
 
+			% TODO : race condition
 
-	reliable_delivery_monitor_store_redis:ack_with_identifier(Identifier),
-
-	case reliable_delivery_monitor_store:lookup(Identifier) of
-		{error,not_found} ->
-			reliable_delivery_monitor_stats:increment_unknown_monitors(),
-			{error, {identifier_not_found, Identifier }};
-		{ok, _, Pid} ->
 			reliable_delivery_worker:notify_acked(Pid),
 			reliable_delivery_monitor_stats:increment_acked_monitors(),
-			{ok,{ identifier, Identifier} }
-	end.
+			{ok,{ identifier, Identifier} };
+
+		{ok, acked} ->
+			lager:info("~p : ~p~n", [Identifier, acked]),
+			{already_acked,{ identifier, Identifier} };
+
+		{ok, unknown} ->
+			lager:info("~p : ~p~n", [Identifier, unknown]),
+			reliable_delivery_monitor_stats:increment_unknown_monitors(),
+			{error, {identifier_not_found, Identifier }}
+
+		end.	
 
 -spec callback( unknown | expired, Identifier, Value | none) -> ok when
 	Identifier :: identifier(),	
