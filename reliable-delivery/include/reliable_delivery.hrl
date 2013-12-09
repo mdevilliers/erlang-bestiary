@@ -4,6 +4,6 @@
 -define (BUCKET_TICKS_PER_BUCKET, 10).
 
 -record(lease,{ identifier, lease_time, start_time,application }).
--record (monitorvalue, {identifier, pid, value, created, timeout }).
+-record (monitorvalue, {identifier, pid }).
 
 -record (tick, {start_time , offset = 0 , bucket = 0}).

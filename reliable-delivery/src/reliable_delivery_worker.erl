@@ -14,7 +14,7 @@ notify_acked(Pid) ->
 
 init([Identifier,LeaseTime,Application]) ->
 
- % reliable_delivery_monitor_store:insert(Identifier, self(), Value, LeaseTime),
+  reliable_delivery_monitor_store:insert(Identifier, self()),
 
   StartTime = time_util:now_in_seconds(),
   
@@ -40,11 +40,12 @@ handle_cast(_Msg, State) ->
 
 handle_info(timeout, State) ->
   Identifier = State#lease.identifier,
-  Application = State#lease.application,
+  %Application = State#lease.application,
   case reliable_delivery_monitor_store:lookup(Identifier) of
-    {ok, _, Value, _, _} ->
-      reliable_delivery_monitor_stats:increment_expired_monitors(),
-      try_to_send_expiration_to_connected_application(Identifier, Application, Value);
+    {ok, Identifier, _} ->
+      lager:info("Expiring ~p~n",[Identifier]),
+      reliable_delivery_monitor_stats:increment_expired_monitors();
+      %try_to_send_expiration_to_connected_application(Identifier, Application, Value);
     {error, not_found} ->
       reliable_delivery_monitor_stats:increment_unknown_monitors(),
       reliable_delivery:callback(unknown, Identifier, none)
@@ -63,12 +64,12 @@ terminate(_Reason, State) ->
 code_change(_, State, _) ->
   {ok, State}.
 
-try_to_send_expiration_to_connected_application(Identifier,Application, Value) ->
-      case  gproc:lookup_values({p, l, {application}}) of
-        [{Pid,Application}|_]  ->
-          reliable_delivery_monitor_stats:increment_expired_acknowledgement_delivery_succeded(),
-          gproc:send(Pid, {expired, Identifier, Value});
-        [] -> 
-          reliable_delivery_monitor_stats:increment_expired_acknowledgement_delivery_failed(),
-          lager:error("Expired item confirmation not sent ~p~n", [Identifier])
-      end.
+%try_to_send_expiration_to_connected_application(Identifier,Application, Value) ->
+%      case  gproc:lookup_values({p, l, {application}}) of
+%        [{Pid,Application}|_]  ->
+%          reliable_delivery_monitor_stats:increment_expired_acknowledgement_delivery_succeded(),
+%          gproc:send(Pid, {expired, Identifier, Value});
+%        [] -> 
+%          reliable_delivery_monitor_stats:increment_expired_acknowledgement_delivery_failed(),
+%          lager:error("Expired item confirmation not sent ~p~n", [Identifier])
+%      end.

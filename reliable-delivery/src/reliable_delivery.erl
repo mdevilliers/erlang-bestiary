@@ -26,7 +26,6 @@ start() ->
 
 monitor(LeaseTime, Application, Value) ->
 	Identifier = reliable_delivery_uuid:generate(),
-	%reliable_delivery_monitor_sup:start_monitor(Identifier, LeaseTime, Application, Value),
 	reliable_delivery_monitor_store_redis:push_to_bucket(Identifier, LeaseTime, Application, Value),
 	{ok, Identifier}.
 
@@ -34,11 +33,20 @@ monitor(LeaseTime, Application, Value) ->
 	Identifier :: identifier().
 
 ack(Identifier) ->
+
+	%case reliable_delivery_monitor_store_redis:get_state(Identifier) of
+	%	{ok, inprogress} ->
+
+	%	{ok, acked} ->
+
+
+	reliable_delivery_monitor_store_redis:ack_with_identifier(Identifier),
+
 	case reliable_delivery_monitor_store:lookup(Identifier) of
 		{error,not_found} ->
 			reliable_delivery_monitor_stats:increment_unknown_monitors(),
 			{error, {identifier_not_found, Identifier }};
-		{ok, Pid, _ , _ , _} ->
+		{ok, _, Pid} ->
 			reliable_delivery_worker:notify_acked(Pid),
 			reliable_delivery_monitor_stats:increment_acked_monitors(),
 			{ok,{ identifier, Identifier} }

@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export ([start_link/0, push_to_bucket/4, pop_from_bucket/1, ack_with_identifier/1]).
+-export ([start_link/0, push_to_bucket/4, pop_from_bucket/1, ack_with_identifier/1, get_state/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
@@ -20,17 +20,43 @@ pop_from_bucket(Bucket) ->
 ack_with_identifier(Identifier) ->
 	gen_server:call(?MODULE, {ack, Identifier}).
 
+get_state(Identifier) ->
+	gen_server:call(?MODULE, {get_state, Identifier}).
+
 init([]) ->
   	{ok, ERedisPid} = eredis:start_link(),
   	{ok, ERedisPid}.
+
+
+handle_call({get_state, Identifier}, _From, ERedisPid) ->
+
+	case eredis:q(ERedisPid, ["GET", get_identifier_state_key (Identifier) ]) of
+		{ok, <<"inprogress">>} ->
+			Reply = {ok, inprogress};
+		{ok, <<"acked">>} ->
+			Reply = {ok, acked};
+		{ok, <<"in_memory">>} ->
+			Reply = {ok, in_memory}
+	end,
+	{reply, Reply ,ERedisPid};
 
 handle_call({ack, Identifier}, _From, ERedisPid) ->
 
 	% TODO - error handling
 	% TODO - clean up other keys
-	
-	{ok, Bucket} = get_identifier_bucket_key (Identifier),
-	{ok, _} = eredis:q(ERedisPid, ["SREM", get_ackable_bucket_key (Bucket) , Identifier]),
+	% TODO - check for already acked
+
+	BucketKey = get_identifier_bucket_key (Identifier),
+	{ok, Bucket} = eredis:q(ERedisPid, ["GET", BucketKey]),
+
+	Pipeline = [
+				% remove from ackable bucket
+				["SREM", get_ackable_bucket_key (Bucket) , Identifier],
+				% set state to acked
+ 				["SET", get_identifier_state_key (Identifier)  , <<"acked">>]
+			   ],
+
+	[{ok, _}, {ok, _}] = eredis:qp(ERedisPid, Pipeline),
 
 	reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 	{reply, ok ,ERedisPid};
@@ -38,7 +64,7 @@ handle_call({ack, Identifier}, _From, ERedisPid) ->
 handle_call({pop, Bucket}, _From, ERedisPid) ->
 	BucketName  = get_bucket_key(Bucket),
 
-	case eredis:q(ERedisPid, ["LPOP", BucketName ]) of
+	case eredis:q(ERedisPid, ["SPOP", BucketName ]) of
 		{ok, undefined} ->
 			Reply = {undefined};
 		{ok, Bin } ->
@@ -51,25 +77,18 @@ handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid)
 
 	{ bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
 	
-	MiddleOffsetBucketSize = (?BUCKET_TICK_INTERVAL_MS * ?BUCKET_TICKS_PER_BUCKET) /2 ,
-
-	case (OffsetInBucket < MiddleOffsetBucketSize) of
-		true -> Operation = "LPUSH" ;
-		false -> Operation = "RPUSH" 
-	end,
-
-	lager:info("push ~p", [Identifier]),
+	lager:info("push ~p into ~p with offset ~p~n", [Identifier,Bucket, OffsetInBucket]),
 	Pipeline = [
 					% push monitor to list
-					[Operation, get_bucket_key(Bucket) , {Identifier, LeaseTime, Application, OffsetInBucket}],
+					["SADD", get_bucket_key(Bucket) , {Identifier, LeaseTime, Application, OffsetInBucket}],
 					% add to set of identifiers to ack
-			        ["SADD", get_ackable_bucket_key (Bucket) , Identifier],
-			        % save bucket against identifer 
 			        ["SET", get_identifier_bucket_key (Identifier)  , Bucket],
 			        % save value against identifier
-			 	    ["SET", get_identifier_value_key (Identifier)  , Value]
+			 	    ["SET", get_identifier_value_key (Identifier)  , Value],
+			 	    % set state
+			        ["SET", get_identifier_state_key (Identifier)  , <<"inprogress">>]
         		],
-	[{ok, _}, {ok, _}, {ok, _}, {ok, _}] = eredis:qp(ERedisPid, Pipeline),
+	[{ok, _}, {ok, _}, {ok, _},{ok, _}] = eredis:qp(ERedisPid, Pipeline),
 	reliable_delivery_monitor_stats:increment_persisted_monitors(),
   	{reply, ok ,ERedisPid};
 
@@ -89,7 +108,7 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 get_identifier_key (Identifier) ->
-	io_lib:format("rd:id:~p",[binary_to_list(Identifier)]).
+	io_lib:format("_rd:id:~p",[binary_to_list(Identifier)]).
 
 get_identifier_value_key (Identifier) ->
 	get_identifier_key (Identifier) ++ ":value".
@@ -97,8 +116,11 @@ get_identifier_value_key (Identifier) ->
 get_identifier_bucket_key (Identifier) ->
 	get_identifier_key (Identifier) ++ ":bucket".
 
+get_identifier_state_key (Identifier) ->
+	get_identifier_key (Identifier) ++ ":state".
+
 get_bucket_key (Bucket) ->
-	io_lib:format("rd:bucket:~p",[Bucket]).
+	io_lib:format("_rd:bucket:~p",[Bucket]).
 
 get_ackable_bucket_key (Bucket) ->
 	get_bucket_key (Bucket) ++ ":ackable".

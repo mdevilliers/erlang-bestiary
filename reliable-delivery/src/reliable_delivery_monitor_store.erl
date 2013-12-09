@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export ([start_link/0, delete/1,lookup/1,insert/4]).
+-export ([start_link/0, delete/1,lookup/1,insert/2]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
@@ -17,12 +17,9 @@ delete(Identifier) ->
 	gen_server:call(?MODULE, {delete, Identifier}).
 lookup(Identifier) ->
 	gen_server:call(?MODULE, {lookup, Identifier}).
-insert(Identifier, Pid, Value, LeaseTime) ->
+insert(Identifier, Pid) ->
 	gen_server:call(?MODULE, {insert, #monitorvalue{ 	identifier = Identifier, 
-														pid = Pid, 
-														value =Value, 
-														timeout = LeaseTime, 
-														created = calendar:local_time()
+														pid = Pid
 													}}).
 
 init([]) ->
@@ -35,8 +32,8 @@ handle_call({insert, Value}, _From, State) ->
 
 handle_call({lookup, Identifier}, _From, State) ->
 	case ets:lookup(?TABLE_ID,Identifier) of
-		[{monitorvalue, Identifier, Pid, Value, Timeout, Created}] ->
-			Reply = {ok, Pid, Value, Timeout, Created};
+		[{monitorvalue, Identifier, Pid}] ->
+			Reply = {ok, Identifier, Pid};
 		[] -> 
 			Reply = {error, not_found}
 	end,

@@ -20,7 +20,6 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Msg, State) ->
   {noreply, State}.
 
-
 handle_info({ _ ,{bucket_info},{new, NewBucket}}, State) ->
 	empty_bucket(NewBucket),
 	{noreply, State};
@@ -41,5 +40,6 @@ empty_bucket(Bucket) ->
 			reliable_delivery_monitor_sup:start_monitor(Identifier, OffsetInBucket, Application),
 			empty_bucket(Bucket);
 		{undefined} ->
+			% need to retry emptying bucket for the duration of the bucket
 			lager:info("Empty ~p~n",[Bucket])
 	end.
