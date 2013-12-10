@@ -17,10 +17,7 @@ init([Identifier,LeaseTime,Application]) ->
   reliable_delivery_monitor_store:insert(Identifier, self()),
 
   StartTime = time_util:now_in_seconds(),
-  
-  reliable_delivery_monitor_stats:increment_total_monitors(),
-  reliable_delivery_monitor_stats:increment_current_monitors(),
-  
+    
   {ok, 
     #lease{
       identifier = Identifier,
