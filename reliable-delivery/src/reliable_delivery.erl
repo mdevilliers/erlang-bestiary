@@ -11,11 +11,11 @@
 -spec start() -> ok.
 start() ->
 	lager:start(),
-	ok = application:start(folsom),
-	ok = application:start(crypto),
-    ok = application:start(ranch),
-    ok = application:start(cowboy),
-    ok = application:start(gproc),
+	application:start(folsom),
+	application:start(crypto),
+    application:start(ranch),
+    application:start(cowboy),
+    application:start(gproc),
 	ok = application:start(reliable_delivery).
 
 -spec monitor( LeaseTime ,Application, Value) -> {ok, Identifier} when 

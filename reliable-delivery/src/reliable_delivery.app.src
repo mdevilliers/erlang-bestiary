@@ -6,12 +6,14 @@
   {applications, [
                   kernel,
                   stdlib,
-                  cowboy,
+                  lager,
                   folsom,
                   crypto,
-                  lager
-                  
+                  ranch,
+                  cowboy,
+                  gproc
                  ]},
+
   {mod, { reliable_delivery_app, []}},
   {env, [{http_port,8180}]}
  ]}.

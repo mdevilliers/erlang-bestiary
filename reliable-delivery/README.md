@@ -38,6 +38,22 @@ reliable_delivery:ack(Identifier).
 
 ```
 
+Run tests
+---------
+
+```
+
+rebar.cmd skip_deps=true eunit
+
+```
+
+Coverage report -
+
+file:///C:/git/erlang-bestiary/reliable-delivery/.eunit/index.html
+
+
+
+
 Run test harness
 ----------------
 
