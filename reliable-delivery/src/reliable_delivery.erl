@@ -40,12 +40,13 @@ ack(Identifier) ->
 
 	case reliable_delivery_monitor_store_redis:get_state(Identifier) of
 		{ok, inprogress} ->
-			lager:info("~p : ~p~n", [Identifier, inprogress]),
+			lager:info("ack : ~p : ~p~n", [Identifier, inprogress]),
 			reliable_delivery_monitor_store_redis:ack_with_identifier(Identifier),
 			reliable_delivery_monitor_stats:increment_acked_monitors(),
+			reliable_delivery_monitor_stats:decrement_current_monitors(),
 			{ok,{ identifier, Identifier} };
 		{ok, inmemory} ->
-			lager:info("~p : ~p~n", [Identifier, inmemory]),
+			lager:info("ack : ~p : ~p~n", [Identifier, inmemory]),
 			
 			% TODO : race condition
 			
@@ -60,11 +61,11 @@ ack(Identifier) ->
 			end;
 
 		{ok, acked} ->
-			lager:info("~p : ~p~n", [Identifier, acked]),
+			lager:info("ack : ~p : ~p~n", [Identifier, acked]),
 			{already_acked,{ identifier, Identifier} };
 
 		{ok, unknown} ->
-			lager:info("~p : ~p~n", [Identifier, unknown]),
+			lager:info("ack : ~p : ~p~n", [Identifier, unknown]),
 			reliable_delivery_monitor_stats:increment_unknown_monitors(),
 			{error, {identifier_not_found, Identifier }}
 

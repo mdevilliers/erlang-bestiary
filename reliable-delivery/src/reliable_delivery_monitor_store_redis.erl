@@ -69,6 +69,7 @@ handle_call({pop, Bucket}, _From, ERedisPid) ->
 			% not nice
 			eredis:q(ERedisPid,["SET", get_identifier_state_key (Identifier)  , <<"inmemory">>]),
 			{ok, Details} = eredis:q(ERedisPid,["GET", get_details_bucket_key (Identifier)]),
+			reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 			Reply = {ok, binary_to_term(Details)}
 	end,
 

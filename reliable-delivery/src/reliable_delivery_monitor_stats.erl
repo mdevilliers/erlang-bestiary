@@ -70,7 +70,7 @@ stats() ->
 		{counter, monitored_items_unknown, <<"Unknown items">>, <<"Unknown items - maybe expired, maybe unknown identifiers.">>},
 		{counter, monitored_items_acked, <<"Acked items">>, <<"Total monitored items confirmed.">>},
 		{counter, monitored_items_expired, <<"Expired items">>, <<"Total expired items.">>},
-		{counter, monitored_items_persisted, <<"Persisted items">>, <<"Total items persisted to buckets.">>},
+		{counter, monitored_items_persisted, <<"Persisted items">>, <<"Current total items persisted to buckets.">>},
 		{counter, monitored_items_current, <<"Current items">>, <<"Current total items monitored.">>},
 		{counter, monitored_items_total, <<"Total items">>, <<"Culmitive total of all items monitored.">>}
 		].
