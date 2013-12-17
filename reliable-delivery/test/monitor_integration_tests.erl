@@ -1,8 +1,7 @@
--module (ack_tests).
+-module (monitor_integration_tests).
 
--ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
- 
+
 -define(setup(F), {setup, fun start/0, fun stop/1, F}).
 -define(foreach(Tests), {foreach, fun start/0, Tests}).
 
@@ -46,4 +45,3 @@ monitor_ack_unknown_monitor() ->
 	Identifier = <<"rubbish">>,
 	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier).
  
--endif.
