@@ -15,9 +15,20 @@ running_application_test_() ->
 	[{"Tests requiring running reliable_delivery application",
 		?setup(
 			[
+			fun monitor_then_wait_then_ack_too_late/0,
 			fun monitor_then_wait_then_ack_and_ack_again/0,
 			fun monitor_ack_unknown_monitor/0
 			])}].
+
+monitor_then_wait_then_ack_too_late() ->
+    % TODO this test fails needs to pass....
+    Timeout = 100,
+
+	{ok, Identifier} =  reliable_delivery:monitor(Timeout,<<"my application name">>, <<"my value">>),
+
+	timer:sleep(Timeout + Timeout),
+	
+	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier).
 
 monitor_then_wait_then_ack_and_ack_again() ->
     
