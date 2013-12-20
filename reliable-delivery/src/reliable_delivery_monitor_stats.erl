@@ -53,7 +53,7 @@ increment_persisted_monitors() ->
 	increment(monitored_items_persisted).
 
 all_metrics_with_values() ->
-	DisplayValues = accumultate_metrics_for_display(stats(),[]),
+	DisplayValues = accumultate_metrics(stats(),[]),
 	DisplayValues.
 
 increment(Name) ->
@@ -87,11 +87,11 @@ create_stat({counter,Name,_,_}) ->
 create_stat({Type,_}) ->
 	lager:error("Unknown stat type ~p.~n", [Type]).
 
-accumultate_metrics_for_display([], Acc) ->
+accumultate_metrics([], Acc) ->
 	Acc;
-accumultate_metrics_for_display([{_,Name,DisplayName, Description}|T], Acc) ->
+accumultate_metrics([{_,Name,DisplayName, Description}|T], Acc) ->
 	CurrentValue = [{ <<"name">>, DisplayName },{ <<"value">>, folsom_metrics:get_metric_value(Name)},{ <<"description">>, Description}],
-	accumultate_metrics_for_display(T, [ CurrentValue | Acc ]).
+	accumultate_metrics(T, [ CurrentValue | Acc ]).
 
 init([]) ->
 	[H|T] = stats(),
