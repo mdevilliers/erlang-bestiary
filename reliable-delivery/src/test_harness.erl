@@ -3,13 +3,13 @@
 -export ([start/1]).
 -export ([do_start/1, do_ack/2]).
 
--define (MIN_TIME, 100).
+-define (MIN_TIME, 1000).
 
 start(0) ->
 	ok;
 start(Iterations) ->
 	random:seed(now()),
-	spawn(?MODULE, do_start, [500]),
+	spawn(?MODULE, do_start, [600]),
 	start(Iterations-1).
 
 do_start(0) ->
