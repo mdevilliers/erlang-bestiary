@@ -57,13 +57,14 @@ handle_cast(_Msg, State) ->
   {noreply, State}.
 
 handle_info(trigger, #tick { start_time = StartTime, offset = Offset, bucket = Bucket}) ->
-	%io:format("TicK ~p~n", [Tick]),
+	%lager:info("TicK ~p~n", [Tick]),
   Offset1 = Offset + 1,
 	case Offset1 rem ?BUCKET_TICKS_PER_BUCKET  of
 		0  ->
 			Bucket1 = Bucket + 1,
       Offset2 = 0,
-      reliable_delivery_event:notify(bucket_info, {new, Bucket1});
+      reliable_delivery_event:notify(bucket_info, {new, Bucket1}),
+      reliable_delivery_bucket_sup:start_bucket_worker(Bucket1) ;
 		_ -> 
 			Bucket1 = Bucket,
       Offset2 = Offset1
