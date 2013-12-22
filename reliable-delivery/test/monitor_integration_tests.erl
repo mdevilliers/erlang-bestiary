@@ -11,7 +11,7 @@ stop(_) ->
 	application:stop(reliable_delivery).
 
 running_application_test_() ->
-	[{"Tests requiring running reliable_delivery application",
+	[{"Monitor integration tests.",
 		?setup(
 			[
 			fun monitor_then_wait_then_ack_too_late/0,
@@ -20,13 +20,15 @@ running_application_test_() ->
 			])}].
 
 monitor_then_wait_then_ack_too_late() ->
-    % TODO this test fails needs to pass....
-    Timeout = 100,
+    
+    BucketDuration = reliable_delivery_bucket_manager:get_bucket_duration(),
 
-	{ok, Identifier} =  reliable_delivery:monitor(Timeout,<<"my application name">>, <<"my value">>),
+	{ok, Identifier} =  reliable_delivery:monitor(BucketDuration,<<"my application name">>, <<"my value">>),
 
-	timer:sleep(Timeout + Timeout),
+	timer:sleep(BucketDuration + BucketDuration),
 	
+	%Stats = reliable_delivery_monitor_stats:all_metrics_with_values(),
+	%lager:info("Stats : ~p~n",[Stats]),
 	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier).
 
 monitor_then_wait_then_ack_and_ack_again() ->

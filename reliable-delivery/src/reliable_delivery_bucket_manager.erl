@@ -56,7 +56,6 @@ handle_cast(_Msg, State) ->
   {noreply, State}.
 
 handle_info(trigger, #tick { start_time = StartTime, offset = Offset, bucket = Bucket}) ->
-	%lager:info("TicK ~p~n", [Tick]),
   Offset1 = Offset + 1,
 	case Offset1 rem ?BUCKET_TICKS_PER_BUCKET  of
 		0  ->
