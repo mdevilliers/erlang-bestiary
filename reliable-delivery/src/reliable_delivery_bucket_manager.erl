@@ -25,7 +25,6 @@ stop() ->
 
 init(_) ->
   timer:send_interval(?BUCKET_TICK_INTERVAL_MS, trigger),
-  reliable_delivery_event:notify(bucket_info, {new, 0}),
 	StartTime = time_util:now_in_seconds(),
   	{ok, #tick {
   		start_time = StartTime,
@@ -63,8 +62,7 @@ handle_info(trigger, #tick { start_time = StartTime, offset = Offset, bucket = B
 		0  ->
 			Bucket1 = Bucket + 1,
       Offset2 = 0,
-      reliable_delivery_event:notify(bucket_info, {new, Bucket1}),
-      reliable_delivery_bucket_sup:start_bucket_worker(Bucket1) ;
+      reliable_delivery_event:notify(bucket_info, {new, Bucket1});
 		_ -> 
 			Bucket1 = Bucket,
       Offset2 = Offset1
