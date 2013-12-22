@@ -10,7 +10,7 @@ start_link(Bucket) ->
   gen_server:start_link(?MODULE, [Bucket],[]).
 
 empty_bucket(Pid, Bucket) ->
-  gen_server:cast(Pid, {empty_bucket, Bucket}).
+  gen_server:cast(Pid, {empty_bucket, Pid, Bucket}).
 
 % others
 init([Bucket]) ->
@@ -22,8 +22,8 @@ init([Bucket]) ->
 handle_call(_Request, _From, State) ->
   	{reply, ok, State}.
 
-handle_cast({empty_bucket, Bucket}, State) ->
-  do_empty_bucket(Bucket),
+handle_cast({empty_bucket, Pid, Bucket}, State) ->
+  do_empty_bucket(Pid, Bucket),
   {noreply, State};
 handle_cast(_Msg, State) ->
   {noreply, State}.
@@ -39,13 +39,13 @@ terminate(_Reason, _State) ->
 code_change(_, State, _) ->
   {ok, State}.
 
-do_empty_bucket(Bucket) ->
+do_empty_bucket(Pid, Bucket) ->
    	case reliable_delivery_monitor_store_redis:pop_from_bucket(Bucket) of
 		{ok, {Identifier, _, Application, OffsetInBucket} = Response} ->
 			lager:info("Popped ~p : ~p~n",[Bucket, Response]),
 			reliable_delivery_monitor_sup:start_monitor(Identifier, OffsetInBucket, Application),
-			do_empty_bucket(Bucket);
+			do_empty_bucket(Pid, Bucket);
 		{undefined} ->
-			lager:info("Empty ~p~n",[Bucket])%,
-			%empty_bucket(Bucket)
+			%lager:info("Empty ~p~n",[Bucket]),
+			empty_bucket(Pid, Bucket)
 	end.
