@@ -88,7 +88,8 @@ iterate_stats(Stat,[H | T]) ->
 	iterate_stats(H,T).
 
 create_stat({counter,Name,_,_}) ->
-	folsom_metrics:new_counter(Name);
+	folsom_metrics:new_counter(Name),
+	folsom_metrics_counter:clear(Name);
 create_stat({Type,_}) ->
 	lager:error("Unknown stat type ~p.~n", [Type]).
 

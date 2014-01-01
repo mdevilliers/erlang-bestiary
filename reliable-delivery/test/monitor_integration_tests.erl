@@ -21,18 +21,31 @@ running_application_test_() ->
 
 monitor_then_wait_then_ack_too_late() ->
     
+    reliable_delivery_monitor_stats:reset_all_metrics(),
+
     BucketDuration = reliable_delivery_bucket_manager:get_bucket_duration(),
 
 	{ok, Identifier} =  reliable_delivery:monitor(BucketDuration,<<"my application name">>, <<"my value">>),
 
 	timer:sleep(BucketDuration + BucketDuration),
 	
-	%Stats = reliable_delivery_monitor_stats:all_metrics_with_values(),
-	%lager:info("Stats : ~p~n",[Stats]),
-	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier).
+	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier),
+
+	Stats = get_current_stats(),
+	
+	ExpiredItems = kvlists:get_value(monitored_items_expired , Stats),
+	TotalItems = kvlists:get_value(monitored_items_total , Stats),
+	AckedItmes =  kvlists:get_value(monitored_items_acked , Stats),
+
+	?assertEqual(ExpiredItems, TotalItems),
+	?assertEqual(ExpiredItems, 1),
+	?assertEqual(TotalItems, 1),
+	?assertEqual(AckedItmes, 0).
 
 monitor_then_wait_then_ack_and_ack_again() ->
     
+	reliable_delivery_monitor_stats:reset_all_metrics(),
+
 	{ok, Identifier} =  reliable_delivery:monitor(5000,<<"my application name">>, <<"my value">>),
 
 	timer:sleep(100),
@@ -40,10 +53,39 @@ monitor_then_wait_then_ack_and_ack_again() ->
 	{ok,{ identifier, Identifier}} = reliable_delivery:ack(Identifier),
 
 	% attempt double ack
-	{already_acked,{ identifier, Identifier} } = reliable_delivery:ack(Identifier).
+	{already_acked,{ identifier, Identifier} } = reliable_delivery:ack(Identifier),
+
+	Stats = get_current_stats(),
+	
+	AckedItems =  kvlists:get_value(monitored_items_acked , Stats),
+	TotalItems = kvlists:get_value(monitored_items_total , Stats),
+
+	?assertEqual(AckedItems, TotalItems),
+	?assertEqual(AckedItems, 1),
+	?assertEqual(TotalItems, 1).
 
 monitor_ack_unknown_monitor() ->
     
+    reliable_delivery_monitor_stats:reset_all_metrics(),
+
 	Identifier = <<"rubbish">>,
-	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier).
+	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier),
+
+	Stats = get_current_stats(),
+	
+	UnknownItems =  kvlists:get_value(monitored_items_unknown , Stats),
+	?assertEqual(UnknownItems, 1).
  
+%% helpers
+
+get_current_stats() ->
+	Stats = reliable_delivery_monitor_stats:all_metrics_with_values(),
+	stats_as_flat_kv(Stats).
+
+stats_as_flat_kv(Stats) ->
+	flatten_stats(Stats, []).
+
+flatten_stats([], Acc) ->
+	Acc;
+flatten_stats([ [{ <<"name">>, _ },{ <<"identifier">>, Name }, { <<"value">>, Value},{ <<"description">>, _}] |T], Acc) ->
+	flatten_stats(T, [{Name,Value} | Acc]).
