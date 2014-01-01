@@ -79,6 +79,8 @@ handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid)
 
 	{ bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
 	
+	%lager:info("Push to bucket - Identifier : ~p LeaseTime : ~p BucketDetails : ~p~n", [Identifier,LeaseTime, P]),
+
 	Pipeline = [
 					% push monitor to list
 					["SADD", get_bucket_key(Bucket) , Identifier],
