@@ -16,8 +16,32 @@ running_application_test_() ->
 			[
 			fun monitor_then_wait_then_ack_too_late/0,
 			fun monitor_then_wait_then_ack_and_ack_again/0,
-			fun monitor_ack_unknown_monitor/0
+			fun monitor_ack_unknown_monitor/0,
+			fun monitor_then_wait_for_expire_with_short_expiry_time/0
 			])}].
+
+monitor_then_wait_for_expire_with_short_expiry_time() ->
+    
+    reliable_delivery_monitor_stats:reset_all_metrics(),
+
+    ExpiryTime = 10,
+
+	{ok, Identifier} =  reliable_delivery:monitor(ExpiryTime,<<"my application name">>, <<"my value">>),
+
+	timer:sleep(ExpiryTime + ExpiryTime),
+	
+	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier),
+
+	Stats = get_current_stats(),
+	
+	ExpiredItems = kvlists:get_value("monitored_items_expired" , Stats),
+	TotalItems = kvlists:get_value("monitored_items_total" , Stats),
+	AckedItmes =  kvlists:get_value("monitored_items_acked" , Stats),
+
+	?assertEqual(ExpiredItems, TotalItems),
+	?assertEqual(ExpiredItems, 1),
+	?assertEqual(TotalItems, 1),
+	?assertEqual(AckedItmes, 0).
 
 monitor_then_wait_then_ack_too_late() ->
     
@@ -33,9 +57,9 @@ monitor_then_wait_then_ack_too_late() ->
 
 	Stats = get_current_stats(),
 	
-	ExpiredItems = kvlists:get_value(monitored_items_expired , Stats),
-	TotalItems = kvlists:get_value(monitored_items_total , Stats),
-	AckedItmes =  kvlists:get_value(monitored_items_acked , Stats),
+	ExpiredItems = kvlists:get_value("monitored_items_expired" , Stats),
+	TotalItems = kvlists:get_value("monitored_items_total" , Stats),
+	AckedItmes =  kvlists:get_value("monitored_items_acked" , Stats),
 
 	?assertEqual(ExpiredItems, TotalItems),
 	?assertEqual(ExpiredItems, 1),
@@ -57,8 +81,8 @@ monitor_then_wait_then_ack_and_ack_again() ->
 
 	Stats = get_current_stats(),
 	
-	AckedItems =  kvlists:get_value(monitored_items_acked , Stats),
-	TotalItems = kvlists:get_value(monitored_items_total , Stats),
+	AckedItems =  kvlists:get_value("monitored_items_acked" , Stats),
+	TotalItems = kvlists:get_value("monitored_items_total" , Stats),
 
 	?assertEqual(AckedItems, TotalItems),
 	?assertEqual(AckedItems, 1),
@@ -73,7 +97,7 @@ monitor_ack_unknown_monitor() ->
 
 	Stats = get_current_stats(),
 	
-	UnknownItems =  kvlists:get_value(monitored_items_unknown , Stats),
+	UnknownItems =  kvlists:get_value("monitored_items_unknown" , Stats),
 	?assertEqual(UnknownItems, 1).
  
 %% helpers

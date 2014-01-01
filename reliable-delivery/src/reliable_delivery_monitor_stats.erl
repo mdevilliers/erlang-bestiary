@@ -54,8 +54,7 @@ increment_persisted_monitors() ->
 	increment(monitored_items_persisted).
 
 all_metrics_with_values() ->
-	DisplayValues = accumultate_metrics(stats(),[]),
-	DisplayValues.
+	accumultate_metrics(stats(),[]).
 
 increment(Name) ->
 	folsom_metrics:notify({Name, {inc, 1}}).
@@ -96,7 +95,7 @@ create_stat({Type,_}) ->
 accumultate_metrics([], Acc) ->
 	Acc;
 accumultate_metrics([{_,Name,DisplayName, Description}|T], Acc) ->
-	CurrentValue = [{ <<"name">>, DisplayName },{ <<"identifier">>, Name },{ <<"value">>, folsom_metrics:get_metric_value(Name)},{ <<"description">>, Description}],
+	CurrentValue = [{ <<"name">>, DisplayName },{ <<"identifier">>, atom_to_list(Name) },{ <<"value">>, folsom_metrics:get_metric_value(Name)},{ <<"description">>, Description}],
 	accumultate_metrics(T, [ CurrentValue | Acc ]).
 
 init([]) ->

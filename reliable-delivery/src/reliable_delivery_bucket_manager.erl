@@ -32,7 +32,7 @@ init(_) ->
   		bucket = 0
   	}}.
 
-handle_call({get_bucket, PointInTime}, _,  #tick { bucket = BucketIdentifier, offset = Offset} = State) ->
+handle_call({get_bucket, PointInTime}, _,  #tick { bucket = BucketIdentifier} = State) ->
 
   BucketDuration = get_bucket_duration(),
   OffsetInBucket = PointInTime rem BucketDuration,
@@ -44,7 +44,7 @@ handle_call({get_bucket, PointInTime}, _,  #tick { bucket = BucketIdentifier, of
   		Bucket = BucketIdentifier + Any
   end,
 
-  {reply, { bucket, Bucket, OffsetInBucket + Offset}, State };
+  {reply, { bucket, Bucket, OffsetInBucket }, State };
 handle_call(current_bucket, _,  #tick { bucket = Bucket} = State) ->
   {reply, Bucket, State };
 handle_call(_Request, _From, State) ->
