@@ -13,7 +13,7 @@ notify_acked(Pid) ->
   gen_server:call(Pid, acked).
 
 init([Identifier,LeaseTime,Application]) ->
-
+  lager:info("Worker Started Identifier : ~p , LeaseTime ~p~n", [Identifier,LeaseTime]),
   reliable_delivery_monitor_store:insert(Identifier, self()),
 
   StartTime = time_util:now_in_seconds(),
@@ -27,8 +27,8 @@ init([Identifier,LeaseTime,Application]) ->
   }, LeaseTime}.
 
 handle_call(acked, _From, State) ->
-  Identifier = State#lease.identifier, 
-  lager:info("acked ~p~n",[Identifier]), 
+  %Identifier = State#lease.identifier, 
+  %lager:info("acked ~p~n",[Identifier]), 
   {stop, normal, ok, State};
 
 handle_call(_Request, _From, State) ->
@@ -41,8 +41,8 @@ handle_info(timeout, State) ->
   Identifier = State#lease.identifier,
   %Application = State#lease.application,
   case reliable_delivery_monitor_store:lookup(Identifier) of
-    {ok, Identifier, _} ->
-      lager:info("timeout ~p~n",[Identifier]),
+    {ok, _ , _} ->
+      %lager:info("timeout ~p~n",[Identifier]),
       reliable_delivery_monitor_stats:increment_expired_monitors();
       %try_to_send_expiration_to_connected_application(Identifier, Application, Value);
     {error, not_found} ->
@@ -58,7 +58,7 @@ handle_info(_Info, State) ->
 terminate(_Reason, State) ->
 
   Identifier = State#lease.identifier,
-  lager:info("terminate : ~p : ~p~n", [Identifier, _Reason]),
+  %lager:info("terminate : ~p : ~p~n", [Identifier, _Reason]),
   reliable_delivery_monitor_store:delete(Identifier),
   reliable_delivery_monitor_stats:decrement_current_monitors(),
   ok.

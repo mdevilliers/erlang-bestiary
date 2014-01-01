@@ -2,6 +2,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-export ([start_monitors/2]).
+
 -define(setup(F), {setup, fun start/0, fun stop/1, F}).
 -define(foreach(Tests), {foreach, fun start/0, Tests}).
 
@@ -18,8 +20,29 @@ running_application_test_() ->
 			fun monitor_then_wait_then_ack_and_ack_again/0,
 			fun monitor_ack_unknown_monitor/0,
 			fun monitor_then_wait_for_expire_with_short_expiry_time/0,
-			fun monitor_then_ack_with_short_expiry_time/0
+			fun monitor_then_ack_with_short_expiry_time/0,
+			fun mass_monitor_expiration/0
 			])}].
+
+mass_monitor_expiration() ->
+	reliable_delivery_monitor_stats:reset_all_metrics(),
+
+	Monitors = 50,
+	ExpiryTime = 100, 
+
+	spawn(?MODULE, start_monitors, [ExpiryTime, Monitors]),
+	timer:sleep(ExpiryTime + ExpiryTime),
+
+	Stats = get_current_stats(),
+	
+	ExpiredItems = kvlists:get_value("monitored_items_expired" , Stats),
+	TotalItems = kvlists:get_value("monitored_items_total" , Stats),
+	AckedItmes =  kvlists:get_value("monitored_items_acked" , Stats),
+
+	?assertEqual(ExpiredItems, TotalItems),
+	?assertEqual(ExpiredItems, Monitors),
+	?assertEqual(TotalItems, Monitors),
+	?assertEqual(AckedItmes, 0).
 
 monitor_then_ack_with_short_expiry_time() ->
     
@@ -134,3 +157,9 @@ flatten_stats([], Acc) ->
 	Acc;
 flatten_stats([ [{ <<"name">>, _ },{ <<"identifier">>, Name }, { <<"value">>, Value},{ <<"description">>, _}] |T], Acc) ->
 	flatten_stats(T, [{Name,Value} | Acc]).
+
+start_monitors(_, 0) ->
+	ok;
+start_monitors(Duration, Monitors) ->
+ 	reliable_delivery:monitor(Duration,<<"my application name">>, <<"my value">>),
+ 	start_monitors(Duration, Monitors - 1).
