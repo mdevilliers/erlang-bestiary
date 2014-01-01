@@ -13,7 +13,8 @@
 			increment_expired_acknowledgement_delivery_succeded/0,
 			increment_persisted_monitors/0,
 			decrement_persisted_monitors/0,
-			all_metrics_with_values/0
+			all_metrics_with_values/0,
+			reset_all_metrics/0
 		]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -62,7 +63,11 @@ increment(Name) ->
 decrement(Name) ->
 	folsom_metrics:notify({Name, {dec, 1}}).
 
-% list of all stats in form {type, name, displayname, description}
+reset_all_metrics() ->
+	[H|T] = stats(),
+	iterate_stats(H,T).
+
+% list of all stats in form {type, identifier, displayname, description}
 stats() ->
 	[	
 		{counter, expired_acknowledgement_delivery_failed, <<"Total failed item failure delivery">>, <<"Failed in delivering expired item notification.">>},
@@ -90,12 +95,11 @@ create_stat({Type,_}) ->
 accumultate_metrics([], Acc) ->
 	Acc;
 accumultate_metrics([{_,Name,DisplayName, Description}|T], Acc) ->
-	CurrentValue = [{ <<"name">>, DisplayName },{ <<"value">>, folsom_metrics:get_metric_value(Name)},{ <<"description">>, Description}],
+	CurrentValue = [{ <<"name">>, DisplayName },{ <<"identifier">>, Name },{ <<"value">>, folsom_metrics:get_metric_value(Name)},{ <<"description">>, Description}],
 	accumultate_metrics(T, [ CurrentValue | Acc ]).
 
 init([]) ->
-	[H|T] = stats(),
-	iterate_stats(H,T),
+	reset_all_metrics(),
   	{ok, []}.
 
 handle_call(_Request, _From, State) ->
