@@ -13,8 +13,8 @@ start_monitor(Identifier, LeaseTime, Application) ->
 	supervisor:start_child(?MODULE,[Identifier,LeaseTime, Application]).
 
 init([]) ->
-	Worker = { reliable_delivery_worker,{reliable_delivery_worker, start, []},
-				temporary, brutal_kill, worker,[reliable_delivery_worker]},
+	Worker = { reliable_delivery_monitor,{reliable_delivery_monitor, start, []},
+				temporary, brutal_kill, worker,[reliable_delivery_monitor]},
 	Children = [Worker],
 	
 	RestartStrategy = {simple_one_for_one, 0 ,1},

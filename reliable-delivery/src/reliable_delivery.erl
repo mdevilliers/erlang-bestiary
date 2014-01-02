@@ -52,7 +52,7 @@ ack(Identifier) ->
 			
 			case reliable_delivery_monitor_store:lookup(Identifier) of
 				{ok, _, Pid}  ->
-					reliable_delivery_worker:notify_acked(Pid),
+					reliable_delivery_monitor:notify_acked(Pid),
 					reliable_delivery_monitor_stats:increment_acked_monitors(),
 					{ok,{ identifier, Identifier} };
 				{error, not_found} ->

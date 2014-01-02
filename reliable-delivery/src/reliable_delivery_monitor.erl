@@ -1,4 +1,4 @@
--module (reliable_delivery_worker).
+-module (reliable_delivery_monitor).
 
 -behaviour(gen_server).
 -export([start/3,notify_acked/1]).
