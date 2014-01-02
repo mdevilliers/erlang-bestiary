@@ -14,13 +14,13 @@ empty_bucket(Pid, Bucket) ->
 
 % others
 init([Bucket]) ->
-	lager:info("~p started ~n", [Bucket]),
+	%lager:info("~p started ~n", [Bucket]),
 	reliable_delivery_event:subscribe(bucket_info),
 	empty_bucket(self(), Bucket),
-    {ok, [Bucket]}.
+  {ok, [Bucket]}.
 
 handle_call(_Request, _From, State) ->
-  	{reply, ok, State}.
+  {reply, ok, State}.
 
 handle_cast({empty_bucket, Pid, Bucket}, State) ->
   do_empty_bucket(Pid, Bucket),
@@ -40,12 +40,12 @@ code_change(_, State, _) ->
   {ok, State}.
 
 do_empty_bucket(Pid, Bucket) ->
-   	case reliable_delivery_bucket_store_redis:pop_from_bucket(Bucket) of
-		{ok, {Identifier, _, Application, OffsetInBucket} = Response} ->
-			lager:info("Popped ~p : ~p~n",[Bucket, Response]),
-			reliable_delivery_monitor_sup:start_monitor(Identifier, OffsetInBucket, Application),
-			do_empty_bucket(Pid, Bucket);
-		{undefined} ->
-			%lager:info("Empty ~p~n",[Bucket]),
-			empty_bucket(Pid, Bucket)
-	end.
+ 	case reliable_delivery_bucket_store:pop(Bucket) of
+	{ok, {Identifier, _, Application, OffsetInBucket} } ->
+		%lager:info("Popped ~p : ~p~n",[Bucket, Response]),
+		reliable_delivery_monitor_sup:start_monitor(Identifier, OffsetInBucket, Application),
+		do_empty_bucket(Pid, Bucket);
+	{undefined} ->
+		%lager:info("Empty ~p~n",[Bucket]),
+		empty_bucket(Pid, Bucket)
+end.

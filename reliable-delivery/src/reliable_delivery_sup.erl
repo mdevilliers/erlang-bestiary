@@ -18,6 +18,10 @@ init([]) ->
 					{reliable_delivery_bucket_manager, start_link, []}, 
 					permanent , 1000, worker, []},
 
+	BucketStore =  {reliable_delivery_bucket_store, 
+					{reliable_delivery_bucket_store, start_link, []}, 
+					permanent , 1000, worker, []},					
+
 	BucketKicker = {reliable_delivery_bucket_kicker,
 					{reliable_delivery_bucket_kicker, start_link, []},
 					permanent,1000, worker,[]},
@@ -38,4 +42,4 @@ init([]) ->
 					{reliable_delivery_monitor_stats,start_link,[]},
 					permanent,1000,worker,[]},
 
-    {ok, { {one_for_one, 5, 10}, [BucketSupervisor, BucketManager, BucketKicker, WorkerSupervisor, RedisStore, MonitorStore, StatsWorker]} }.
+    {ok, { {one_for_one, 5, 10}, [BucketSupervisor, BucketManager, BucketStore, BucketKicker, WorkerSupervisor, RedisStore, MonitorStore, StatsWorker]} }.
