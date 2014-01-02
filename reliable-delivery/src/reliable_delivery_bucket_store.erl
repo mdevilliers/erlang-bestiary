@@ -26,7 +26,10 @@ init(_) ->
   	{ok, []}.
 
 handle_call({push, Identifier, LeaseTime, Application, Value },_, State) ->
-  reliable_delivery_bucket_store_redis:push_to_bucket(Identifier, LeaseTime, Application, Value),
+  
+  { bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
+
+  reliable_delivery_bucket_store_redis:push_to_bucket( Bucket, OffsetInBucket, Identifier, LeaseTime, Application, Value),
   {reply, ok, State};
 handle_call({pop, Bucket },_, State) ->
   Reply = reliable_delivery_bucket_store_redis:pop_from_bucket(Bucket),

@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export ([start_link/0, push_to_bucket/4, pop_from_bucket/1, ack_with_identifier/1, get_state/1]).
+-export ([start_link/0, push_to_bucket/6, pop_from_bucket/1, ack_with_identifier/1, get_state/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
@@ -11,8 +11,8 @@
 start_link() ->
   gen_server:start({local, ?MODULE}, ?MODULE, [], []).
 
-push_to_bucket(Identifier, LeaseTime,Application, Value) ->
-	gen_server:call(?MODULE, {push, Identifier, LeaseTime,Application, Value }).
+push_to_bucket( Bucket, OffsetInBucket, Identifier, LeaseTime,Application, Value) ->
+	gen_server:call(?MODULE, {push,  Bucket, OffsetInBucket, Identifier, LeaseTime,Application, Value }).
 
 pop_from_bucket(Bucket) ->
 	gen_server:call(?MODULE, {pop, Bucket}).
@@ -75,10 +75,8 @@ handle_call({pop, Bucket}, _From, ERedisPid) ->
 
   	{reply,Reply,ERedisPid};
 
-handle_call({push, Identifier, LeaseTime, Application, Value}, _From, ERedisPid) ->
+handle_call({push, Bucket, OffsetInBucket, Identifier, LeaseTime, Application, Value}, _From, ERedisPid) ->
 
-	{ bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
-	
 	%lager:info("Push to bucket - Identifier : ~p LeaseTime : ~p BucketDetails : ~p~n", [Identifier,LeaseTime, P]),
 
 	Pipeline = [
