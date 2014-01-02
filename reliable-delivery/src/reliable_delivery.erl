@@ -26,7 +26,7 @@ start() ->
 
 monitor(LeaseTime, Application, Value) ->
 	Identifier = reliable_delivery_uuid:generate(),
-	reliable_delivery_monitor_store_redis:push_to_bucket(Identifier, LeaseTime, Application, Value),
+	reliable_delivery_bucket_store_redis:push_to_bucket(Identifier, LeaseTime, Application, Value),
 
 	reliable_delivery_monitor_stats:increment_total_monitors(),
     reliable_delivery_monitor_stats:increment_current_monitors(),
@@ -38,10 +38,10 @@ monitor(LeaseTime, Application, Value) ->
 
 ack(Identifier) ->
 
-	case reliable_delivery_monitor_store_redis:get_state(Identifier) of
+	case reliable_delivery_bucket_store_redis:get_state(Identifier) of
 		{ok, inprogress} ->
 			lager:info("ack : ~p : ~p~n", [Identifier, inprogress]),
-			reliable_delivery_monitor_store_redis:ack_with_identifier(Identifier),
+			reliable_delivery_bucket_store_redis:ack_with_identifier(Identifier),
 			reliable_delivery_monitor_stats:increment_acked_monitors(),
 			reliable_delivery_monitor_stats:decrement_current_monitors(),
 			{ok,{ identifier, Identifier} };

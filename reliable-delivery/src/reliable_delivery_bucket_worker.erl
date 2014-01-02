@@ -40,7 +40,7 @@ code_change(_, State, _) ->
   {ok, State}.
 
 do_empty_bucket(Pid, Bucket) ->
-   	case reliable_delivery_monitor_store_redis:pop_from_bucket(Bucket) of
+   	case reliable_delivery_bucket_store_redis:pop_from_bucket(Bucket) of
 		{ok, {Identifier, _, Application, OffsetInBucket} = Response} ->
 			lager:info("Popped ~p : ~p~n",[Bucket, Response]),
 			reliable_delivery_monitor_sup:start_monitor(Identifier, OffsetInBucket, Application),

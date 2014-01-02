@@ -1,4 +1,4 @@
--module (reliable_delivery_monitor_store_redis).
+-module (reliable_delivery_bucket_store_redis).
 
 -behaviour(gen_server).
 
@@ -111,6 +111,8 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
+
+% private
 
 get_identifier_key (Identifier) ->
 	lists:flatten(io_lib:format("_rd:id:~s",[Identifier])).

@@ -26,8 +26,8 @@ init([]) ->
 						{reliable_delivery_monitor_sup, start_link, []}, 
 					 	 permanent, infinity, supervisor, []},
 
-	RedisStore = {reliable_delivery_monitor_store_redis,
-					{reliable_delivery_monitor_store_redis, start_link, []},
+	RedisStore = {reliable_delivery_bucket_store_redis,
+					{reliable_delivery_bucket_store_redis, start_link, []},
 					permanent,1000, worker,[]},
 					 	 
 	MonitorStore = {reliable_delivery_monitor_store,
