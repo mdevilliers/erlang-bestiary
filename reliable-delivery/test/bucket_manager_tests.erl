@@ -6,8 +6,10 @@
 -define(setup(F), {setup, fun start/0, fun stop/1, F}).
 
 start() ->
+	?debugMsg(start),
 	reliable_delivery_bucket_manager:start_link().
 stop(_) ->
+	?debugMsg(stop),
 	reliable_delivery_bucket_manager:stop().
 
 running_application_test_() ->

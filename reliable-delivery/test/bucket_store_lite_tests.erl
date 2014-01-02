@@ -16,8 +16,12 @@ running_application_test_() ->
 		{"Append monitors to existing buckets.",?setup(fun append_to_existing_bucket/0)},
 		{"Push multiple monitors to different buckets.",?setup(fun push_non_existant_bucket/0)},
 		{"Add to and pop from bucket.",?setup(fun push_to_and_pop_from_bucket/0)},
-		{"Add multiple to and pop from bucket.",?setup(fun push_mulitple_to_and_pop_from_bucket/0)}
+		{"Add multiple to and pop from bucket.",?setup(fun push_mulitple_to_and_pop_from_bucket/0)},
+		{"Pop from non-existant bucket.",?setup(fun pop_from_non_existant_bucket/0)}
 	].
+
+pop_from_non_existant_bucket() ->
+	{undefined} = reliable_delivery_bucket_store_lite:pop_from_bucket(1).
 
 push_mulitple_to_and_pop_from_bucket()->
 	%?debugFmt("State before ~p ~n", [reliable_delivery_bucket_store_lite:get_state()]),
