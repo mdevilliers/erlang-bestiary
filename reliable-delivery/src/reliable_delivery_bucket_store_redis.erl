@@ -57,7 +57,6 @@ handle_call({ack, Identifier}, _From, ERedisPid) ->
 			   ],
 
 	[{ok, _}, {ok, _}] = eredis:qp(ERedisPid, Pipeline),
-	reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 	{reply, ok ,ERedisPid};
 
 handle_call({pop, Bucket}, _From, ERedisPid) ->
@@ -92,7 +91,6 @@ handle_call({push, Bucket, OffsetInBucket, Identifier, LeaseTime, Application, V
 			        ["SET", get_identifier_state_key (Identifier)  , <<"inprogress">>]
         		],
 	[{ok, <<"1">> }, {ok, _}, {ok, _},{ok, _},{ok, _}] = eredis:qp(ERedisPid, Pipeline),
-	reliable_delivery_monitor_stats:increment_persisted_monitors(),
   	{reply, ok ,ERedisPid};
 
 handle_call(_Request, _From, State) ->

@@ -70,7 +70,6 @@ handle_call({ack, Identifier}, _From, State) ->
 	% delete the monitor
 	true = ets:delete(?MONITOR_TABLE_ID,Identifier),
 
-	%reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 	{reply, ok ,State};
 
 handle_call({pop, Bucket}, _, State) ->
@@ -96,7 +95,6 @@ handle_call({push, Bucket, OffsetInBucket, Identifier, LeaseTime, Application, V
 	true = ets:insert(?BUCKET_MONITOR_TABLE_ID, #bucket_monitor{bucket = Bucket, identifier = Identifier }),
 	true = ets:insert(?MONITOR_TABLE_ID, #monitor{identifier = Identifier, offsetInBucket = OffsetInBucket, leaseTime = LeaseTime, application = Application, value = Value }),
 
-	%reliable_delivery_monitor_stats:increment_persisted_monitors(),
   	{reply, ok ,State};
 
 handle_call(_Request, _From, State) ->
