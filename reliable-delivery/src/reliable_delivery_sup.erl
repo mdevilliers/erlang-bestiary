@@ -30,9 +30,13 @@ init([]) ->
 						{reliable_delivery_monitor_sup, start_link, []}, 
 					 	 permanent, infinity, supervisor, []},
 
-	RedisStore = {reliable_delivery_bucket_store_redis,
-					{reliable_delivery_bucket_store_redis, start_link, []},
+    StoreImpl = {reliable_delivery_bucket_store_lite,
+					{reliable_delivery_bucket_store_lite, start_link, []},
 					permanent,1000, worker,[]},
+
+	%RedisStore = {reliable_delivery_bucket_store_redis,
+	%				{reliable_delivery_bucket_store_redis, start_link, []},
+	%				permanent,1000, worker,[]},
 					 	 
 	MonitorStore = {reliable_delivery_monitor_store,
 					{reliable_delivery_monitor_store, start_link, []},
@@ -42,4 +46,4 @@ init([]) ->
 					{reliable_delivery_monitor_stats,start_link,[]},
 					permanent,1000,worker,[]},
 
-    {ok, { {one_for_one, 5, 10}, [BucketSupervisor, BucketManager, BucketStore, BucketKicker, WorkerSupervisor, RedisStore, MonitorStore, StatsWorker]} }.
+    {ok, { {one_for_one, 5, 10}, [BucketSupervisor, BucketManager, BucketStore, BucketKicker, WorkerSupervisor, StoreImpl, MonitorStore, StatsWorker]} }.
