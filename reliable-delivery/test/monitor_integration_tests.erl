@@ -8,8 +8,10 @@
 -define(foreach(Tests), {foreach, fun start/0, Tests}).
 
 start() ->
+    ?debugMsg(start),
 	reliable_delivery:start().
 stop(_) ->
+	?debugMsg(stop),
 	application:stop(reliable_delivery).
 
 running_application_test_() ->

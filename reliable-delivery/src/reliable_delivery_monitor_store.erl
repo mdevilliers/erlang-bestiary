@@ -7,7 +7,7 @@
 
 -include ("reliable_delivery.hrl").
 
--define (TABLE_ID, monitor_store).
+-define (TABLE_ID, in_memory_monitor_store).
 
 %% Public API
 start_link() ->
