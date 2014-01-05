@@ -46,10 +46,7 @@ do_empty_bucket(Pid, Bucket) ->
 		do_empty_bucket(Pid, Bucket);
   {error,not_found} ->
     % bucket not found - try again
-    empty_bucket(Pid, Bucket);
-	{undefined} ->
-		% no monitors in bucket - try again
-		empty_bucket(Pid, Bucket)
+    empty_bucket(Pid, Bucket)
 end.
 
 iterate_monitors([]) ->

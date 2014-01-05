@@ -41,16 +41,11 @@ handle_cast(_Msg, State) ->
 handle_info(timeout, State) ->
   Identifier = State#lease.identifier,
   %Application = State#lease.application,
-  case reliable_delivery_monitor_store:lookup(Identifier) of
-    {ok, _ , _} ->
-      %lager:info("timeout ~p~n",[Identifier]),
-      reliable_delivery_monitor_stats:increment_expired_monitors();
-      %try_to_send_expiration_to_connected_application(Identifier, Application, Value);
-    {error, not_found} ->
-      lager:info("xxxxx this should never happen xxxxxx ~p~n",[Identifier]),
-      reliable_delivery_monitor_stats:increment_unknown_monitors(),
-      reliable_delivery:callback(unknown, Identifier, none)
-  end,
+
+  {ok, _ , _} = reliable_delivery_monitor_store:lookup(Identifier),
+  reliable_delivery_monitor_stats:increment_expired_monitors(),
+  %try_to_send_expiration_to_connected_application(Identifier, Application, Value);
+ 
   {stop, normal,State};
 
 handle_info(_Info, State) ->

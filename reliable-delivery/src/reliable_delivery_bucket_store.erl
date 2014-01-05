@@ -30,7 +30,6 @@ handle_call({push, Identifier, LeaseTime, Application, Value },_, State) ->
   { bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
 
   reliable_delivery_bucket_store_lite:push_to_bucket( Bucket, OffsetInBucket, Identifier, LeaseTime, Application, Value),
-
   reliable_delivery_monitor_stats:increment_persisted_monitors(),
 
   {reply, ok, State};
@@ -43,7 +42,7 @@ handle_call({pop, Bucket },_, State) ->
 handle_call({ack, Identifier},_, State) ->
 
   reliable_delivery_bucket_store_lite:ack_with_identifier(Identifier),
-  reliable_delivery_monitor_stats:decrement_persisted_monitors(),
+  %reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 
   {reply, ok, State};
 handle_call({get_state, Identifier},_, State) ->
