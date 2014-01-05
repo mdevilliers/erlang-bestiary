@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export ([start_link/0, stop/0, push_to_bucket/6, pop_from_bucket/1, ack_with_identifier/1, get_state_for_monitor/1, get_state/1]).
+-export ([start_link/0, update_expired_monitor/1, stop/0, push_to_bucket/6, pop_from_bucket/1, ack_with_identifier/1, get_state_for_monitor/1, get_state/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
@@ -30,6 +30,9 @@ get_state_for_monitor(Identifier) ->
 get_state(Bucket) ->
 	gen_server:call(?MODULE, {get_state, Bucket}).
 
+update_expired_monitor(Identifier) ->
+	gen_server:call(?MODULE, {update_expired_monitor, Identifier}).
+
 stop() ->
     gen_server:cast(?MODULE, {stop}).
 
@@ -38,6 +41,16 @@ init([]) ->
 	ets:new(?BUCKET_MONITOR_TABLE_ID,[protected, named_table, bag, {keypos, #bucket_monitor.bucket}]),
 	ets:new(?MONITOR_TABLE_ID,[protected, named_table, {keypos, #monitor.identifier}]),
   	{ok, []}.
+
+handle_call( {update_expired_monitor, Identifier}, _From, State) ->
+	
+	% delete the monitor
+	true = ets:delete(?MONITOR_TABLE_ID,Identifier),
+	
+	% set new state
+	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, <<"expired">> }),
+
+	{reply, ok ,State};
 
 handle_call({get_state, Bucket}, _From, State) ->
 	

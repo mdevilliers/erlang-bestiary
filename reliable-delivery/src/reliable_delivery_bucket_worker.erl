@@ -17,7 +17,7 @@ init([Bucket]) ->
 	%lager:info("~p started ~n", [Bucket]),
 	reliable_delivery_event:subscribe(bucket_info),
 	empty_bucket(self(), Bucket),
-  {ok, [Bucket]}.
+  {ok, Bucket}.
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.

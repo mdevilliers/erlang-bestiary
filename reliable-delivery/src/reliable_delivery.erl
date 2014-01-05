@@ -42,10 +42,17 @@ ack(Identifier) ->
 	case reliable_delivery_bucket_store:get_state(Identifier) of
 		{ok, <<"inprogress">>} ->
 			lager:info("ack : ~p : ~p~n", [Identifier, inprogress]),
-			reliable_delivery_bucket_store:ack(Identifier),
-			reliable_delivery_monitor_stats:increment_acked_monitors(),
-			reliable_delivery_monitor_stats:decrement_current_monitors(),
-			{ok,{ identifier, Identifier} };
+
+			case reliable_delivery_bucket_store:ack(Identifier) of
+				ok ->
+					reliable_delivery_monitor_stats:increment_acked_monitors(),
+					reliable_delivery_monitor_stats:decrement_current_monitors(),
+					{ok,{ identifier, Identifier} };
+				Dunno ->
+					%missed it - race condition
+					lager:error("Missed ~p ~p ~n" , [Identifier,Dunno]),
+					ack(Identifier)
+			end;
 		{ok, <<"inmemory">>} ->
 			lager:info("ack : ~p : ~p~n", [Identifier, inmemory]),
 			

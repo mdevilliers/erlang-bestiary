@@ -50,7 +50,7 @@ monitor_then_ack_with_short_expiry_time() ->
     
     reliable_delivery_monitor_stats:reset_all_metrics(),
 
-    ExpiryTime = 10,
+    ExpiryTime = 100,
 
 	{ok, Identifier} = reliable_delivery:monitor(ExpiryTime,<<"my application name">>, <<"my value">>),
 	{ok,<<"inmemory">>} = reliable_delivery_bucket_store:get_state(Identifier),

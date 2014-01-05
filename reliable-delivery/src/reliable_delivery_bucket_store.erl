@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export ([start_link/0, push/4, pop/1, ack/1, get_state/1]).
+-export ([start_link/0, push/4, pop/1, ack/1, get_state/1, expire_monitor/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
@@ -19,12 +19,20 @@ ack(Identifier) ->
 get_state(Identifier) ->
   gen_server:call(?MODULE, {get_state, Identifier}).
 
+expire_monitor(Identifier) ->
+  gen_server:call(?MODULE, {expire_monitor, Identifier}).
+
 start_link() ->
   gen_server:start({local, ?MODULE}, ?MODULE, [], []).
 
 init(_) ->
   	{ok, []}.
 
+
+handle_call({expire_monitor, Identifier},_, State) ->
+
+  Reply = reliable_delivery_bucket_store_lite:update_expired_monitor(Identifier),
+  {reply, Reply, State};
 handle_call({push, Identifier, LeaseTime, Application, Value },_, State) ->
   
   { bucket, Bucket, OffsetInBucket } = reliable_delivery_bucket_manager:get_bucket(LeaseTime),
