@@ -37,7 +37,7 @@ handle_call({push, Identifier, LeaseTime, Application, Value },_, State) ->
 handle_call({pop, Bucket },_, State) ->
 
   Reply = reliable_delivery_bucket_store_lite:pop_from_bucket(Bucket),
-  reliable_delivery_monitor_stats:decrement_persisted_monitors(),
+  %reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 
   {reply, Reply, State};
 handle_call({ack, Identifier},_, State) ->

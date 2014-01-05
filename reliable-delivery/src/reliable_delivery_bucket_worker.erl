@@ -41,11 +41,19 @@ code_change(_, State, _) ->
 
 do_empty_bucket(Pid, Bucket) ->
  	case reliable_delivery_bucket_store:pop(Bucket) of
-	{ok, {Identifier, _, Application, OffsetInBucket} } ->
-		%lager:info("Popped ~p : ~p~n",[Bucket, Response]),
-		reliable_delivery_monitor_sup:start_monitor(Identifier, OffsetInBucket, Application),
+	{ok, MonitorList } ->
+		iterate_monitors(MonitorList),
 		do_empty_bucket(Pid, Bucket);
+  {error,not_found} ->
+    % bucket not found - try again
+    empty_bucket(Pid, Bucket);
 	{undefined} ->
-		%lager:info("Empty ~p~n",[Bucket]),
+		% no monitors in bucket - try again
 		empty_bucket(Pid, Bucket)
 end.
+
+iterate_monitors([]) ->
+  ok;
+iterate_monitors([ {Identifier, _, Application, OffsetInBucket, Value} | T]) ->
+  reliable_delivery_monitor_sup:start_monitor(Identifier, OffsetInBucket, Application, Value),
+  iterate_monitors(T).

@@ -5,7 +5,7 @@
 -record (tick, {start_time , offset = 0 , bucket = 0}).
 
 % monitor 
--record (lease,{ identifier, lease_time, start_time,application }).
+-record (lease,{ identifier, offset_in_bucket, start_time,application, value }).
 
 % monitor store
 -record (monitorvalue, {identifier, pid }).

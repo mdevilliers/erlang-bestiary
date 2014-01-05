@@ -65,7 +65,7 @@ handle_call({ack, Identifier}, _From, State) ->
 	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, <<"acked">> }),
 
 	% remove from bucket - i think this uses a table scan?
- 	1 = ets:select_delete(?BUCKET_MONITOR_TABLE_ID , [{#bucket_monitor{ bucket = '_', identifier = '$1'}, [{'==','$1',{const,Identifier}}],[true]}]),
+ 	ets:select_delete(?BUCKET_MONITOR_TABLE_ID , [{#bucket_monitor{ bucket = '_', identifier = '$1'}, [{'==','$1',{const,Identifier}}],[true]}]),
 
 	% delete the monitor
 	true = ets:delete(?MONITOR_TABLE_ID,Identifier),
@@ -77,12 +77,11 @@ handle_call({pop, Bucket}, _, State) ->
 	% get all records from bucket_monitor tablr
 			% using above return from monitor table...
 			% update record state
-
 	case ets:lookup(?BUCKET_MONITOR_TABLE_ID, Bucket) of
 		[] -> 
 			Reply = {error, not_found};
 		Records ->
-			update_multiple_monitor_state(Records, <<"inmemory">>),
+			update_multiple_monitors(Records, <<"inmemory">>),
 			Accumulated = accumulate_monitors(Records, []),
 			Reply = {ok, Accumulated}
 	end,
@@ -114,11 +113,17 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
-update_multiple_monitor_state([], _) ->
+update_multiple_monitors([], _) ->
 	ok;
-update_multiple_monitor_state([ #bucket_monitor{ identifier = Identifier } | T], State) ->
-	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 3, State }),
-	update_multiple_monitor_state(T, State).
+update_multiple_monitors([ #bucket_monitor{ identifier = Identifier } | T], State) ->
+
+	% update state
+	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, State }),
+
+	% remove from bucket
+ 	1 = ets:select_delete(?BUCKET_MONITOR_TABLE_ID , [{#bucket_monitor{ bucket = '_', identifier = '$1'}, [{'==','$1',{const,Identifier}}],[true]}]),
+
+	update_multiple_monitors(T, State).
 
 accumulate_monitors([] , Acc) ->
 	Acc;
