@@ -44,15 +44,13 @@ handle_call({push, Identifier, LeaseTime, Application, Value },_, State) ->
 handle_call({pop, Bucket },_, State) ->
 
   Reply = reliable_delivery_bucket_store_lite:pop_from_bucket(Bucket),
-  %reliable_delivery_monitor_stats:decrement_persisted_monitors(),
-
+  
   {reply, Reply, State};
 handle_call({ack, Identifier},_, State) ->
 
-  reliable_delivery_bucket_store_lite:ack_with_identifier(Identifier),
-  %reliable_delivery_monitor_stats:decrement_persisted_monitors(),
+  Reply = reliable_delivery_bucket_store_lite:ack_with_identifier(Identifier),
 
-  {reply, ok, State};
+  {reply, Reply , State};
 handle_call({get_state, Identifier},_, State) ->
 
   Reply = reliable_delivery_bucket_store_lite:get_state_for_monitor(Identifier),

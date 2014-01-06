@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export ([start_link/0, update_expired_monitor/1, stop/0, push_to_bucket/6, pop_from_bucket/1, ack_with_identifier/1, get_state_for_monitor/1, get_state/1]).
+-export ([start_link/0, stop/0, update_expired_monitor/1, push_to_bucket/6, pop_from_bucket/1, ack_with_identifier/1, get_state_for_monitor/1, get_state/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include ("reliable_delivery.hrl").
@@ -33,6 +33,7 @@ get_state(Bucket) ->
 update_expired_monitor(Identifier) ->
 	gen_server:call(?MODULE, {update_expired_monitor, Identifier}).
 
+
 stop() ->
     gen_server:cast(?MODULE, {stop}).
 
@@ -50,8 +51,11 @@ handle_call( {update_expired_monitor, Identifier}, _From, State) ->
 	% set new state
 	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, <<"expired">> }),
 
+	reliable_delivery_monitor_stats:increment_expired_monitors(),
+	reliable_delivery_monitor_stats:decrement_current_monitors(),
+	reliable_delivery_monitor_stats:decrement_persisted_monitors(),
+	
 	{reply, ok ,State};
-
 handle_call({get_state, Bucket}, _From, State) ->
 	
 	case ets:lookup(?BUCKET_MONITOR_TABLE_ID, Bucket) of
@@ -74,16 +78,54 @@ handle_call({get_state_for_monitor, Identifier}, _From, State) ->
 
 handle_call({ack, Identifier}, _From, State) ->
 	
-	% set new state
-	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, <<"acked">> }),
+	case ets:lookup(?MONITOR_STATE_TABLE_ID, Identifier) of
+		[{_, Identifier, _, <<"inprogress">>}] ->
+			case ets:select_delete(?BUCKET_MONITOR_TABLE_ID , [{#bucket_monitor{ bucket = '_', identifier = '$1'}, [{'==','$1',{const,Identifier}}],[true]}]) of
+				1 ->
+					% set new state
+	        		true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, <<"acked">> }),
+	        		% delete the monitor
+					true = ets:delete(?MONITOR_TABLE_ID,Identifier),
+					
+					reliable_delivery_monitor_stats:increment_acked_monitors(),
+					reliable_delivery_monitor_stats:decrement_current_monitors(),
+					reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 
-	% remove from bucket - i think this uses a table scan?
- 	ets:select_delete(?BUCKET_MONITOR_TABLE_ID , [{#bucket_monitor{ bucket = '_', identifier = '$1'}, [{'==','$1',{const,Identifier}}],[true]}]),
+					Reply = {ok,{ identifier, Identifier} };
 
-	% delete the monitor
-	true = ets:delete(?MONITOR_TABLE_ID,Identifier),
+				Other ->
+					lager:error("Error acking/deleting ~p with ~p ~n", [Identifier,Other]),
+					Reply = {error, {unknown_error, Identifier}}
+			end;
+		[{_, Identifier, _, <<"inmemory">>}] -> 
+			case reliable_delivery_monitor_store:lookup(Identifier) of
+				{ok, _, Pid}  ->
 
-	{reply, ok ,State};
+					% set new state
+					true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, <<"expired">> }),
+
+					reliable_delivery_monitor:notify_acked(Pid),
+
+					% delete the monitor
+					true = ets:delete(?MONITOR_TABLE_ID,Identifier),
+				
+					reliable_delivery_monitor_stats:increment_acked_monitors(),
+					reliable_delivery_monitor_stats:decrement_current_monitors(),
+					reliable_delivery_monitor_stats:decrement_persisted_monitors(),
+
+					Reply = {ok,{ identifier, Identifier} };
+				{error, not_found} ->
+					reliable_delivery_monitor_stats:increment_unknown_monitors(),
+					Reply = {error, {identifier_not_found, Identifier }}
+			end;
+		[{_, Identifier, _,<<"acked">>}] ->
+				Reply = {already_acked,{ identifier, Identifier} };
+		{error,not_found} ->
+			reliable_delivery_monitor_stats:increment_unknown_monitors(),
+			Reply = {error, {identifier_not_found, Identifier }}		
+	end,
+	
+	{reply, Reply ,State};
 
 handle_call({pop, Bucket}, _, State) ->
  

@@ -57,10 +57,10 @@ all_metrics_with_values() ->
 	accumultate_metrics(stats(),[]).
 
 increment(Name) ->
-	folsom_metrics:notify({Name, {inc, 1}}).
+	gen_server:cast(?MODULE, {increment, Name}).
 
 decrement(Name) ->
-	folsom_metrics:notify({Name, {dec, 1}}).
+	gen_server:cast(?MODULE, {decrement, Name}).
 
 reset_all_metrics() ->
 	[H|T] = stats(),
@@ -105,6 +105,12 @@ init([]) ->
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
+handle_cast({decrement, Name}, State) ->
+	folsom_metrics:notify({Name, {dec, 1}}),
+	{noreply,State};
+handle_cast({increment, Name}, State) ->
+	folsom_metrics:notify({Name, {inc, 1}}),
+	{noreply,State};
 handle_cast(_Msg, State) ->
   {noreply, State}.
 

@@ -37,47 +37,8 @@ monitor(LeaseTime, Application, Value) ->
 	Identifier :: identifier().
 
 ack(Identifier) ->
-
-	%  TODO : move to state machine 
-	case reliable_delivery_bucket_store:get_state(Identifier) of
-		{ok, <<"inprogress">>} ->
-			lager:info("ack : ~p : ~p~n", [Identifier, inprogress]),
-
-			case reliable_delivery_bucket_store:ack(Identifier) of
-				ok ->
-					reliable_delivery_monitor_stats:increment_acked_monitors(),
-					reliable_delivery_monitor_stats:decrement_current_monitors(),
-					{ok,{ identifier, Identifier} };
-				Dunno ->
-					%missed it - race condition
-					lager:error("Missed ~p ~p ~n" , [Identifier,Dunno]),
-					ack(Identifier)
-			end;
-		{ok, <<"inmemory">>} ->
-			lager:info("ack : ~p : ~p~n", [Identifier, inmemory]),
-			
-			% TODO : race condition
-			
-			case reliable_delivery_monitor_store:lookup(Identifier) of
-				{ok, _, Pid}  ->
-					reliable_delivery_monitor:notify_acked(Pid),
-					reliable_delivery_monitor_stats:increment_acked_monitors(),
-					{ok,{ identifier, Identifier} };
-				{error, not_found} ->
-					reliable_delivery_monitor_stats:increment_unknown_monitors(),
-					{error, {identifier_not_found, Identifier }}
-			end;
-
-		{ok, <<"acked">>} ->
-			lager:info("ack : ~p : ~p~n", [Identifier, acked]),
-			{already_acked,{ identifier, Identifier} };
-
-		{error,not_found} ->
-			lager:info("ack : ~p : ~p~n", [Identifier, unknown]),
-			reliable_delivery_monitor_stats:increment_unknown_monitors(),
-			{error, {identifier_not_found, Identifier }}
-
-		end.	
+	Reply = reliable_delivery_bucket_store_lite:ack_with_identifier(Identifier),
+	Reply.
 
 -spec callback( unknown | expired, Identifier, Value | none) -> ok when
 	Identifier :: identifier(),	
