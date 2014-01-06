@@ -42,22 +42,17 @@ handle_info(timeout, State) ->
   Identifier = State#lease.identifier,
   Application = State#lease.application,
   Value = State#lease.value,
-  {ok, _ , _} = reliable_delivery_monitor_store:lookup(Identifier),
   reliable_delivery_bucket_store:expire_monitor(Identifier),
   try_to_send_expiration_to_connected_application(Identifier, Application, Value),
- 
+
   {stop, normal,State};
 
 handle_info(_Info, State) ->
   {noreply, State}.
 
 terminate(_Reason, State) ->
-
   Identifier = State#lease.identifier,
-  %lager:info("terminate : ~p : ~p~n", [Identifier, _Reason]),
-  %reliable_delivery_bucket_store:expire_monitor(Identifier),
   reliable_delivery_monitor_store:delete(Identifier),
-  %reliable_delivery_monitor_stats:decrement_current_monitors(),
   ok.
 
 code_change(_, State, _) ->
