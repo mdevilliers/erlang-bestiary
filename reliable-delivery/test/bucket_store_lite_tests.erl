@@ -31,7 +31,7 @@ get_state_from_non_existant_bucket() ->
 get_state_for_acked_monitor() ->
 	Identifier = <<"abc">>,
 	ok = reliable_delivery_bucket_store_lite:push_to_bucket( 1, 100, Identifier, 1000 ,<<"my application">>, <<"my value">>),
-	ok = reliable_delivery_bucket_store_lite:ack_with_identifier(Identifier),
+	{ok,{identifier,Identifier}} = reliable_delivery_bucket_store_lite:ack_with_identifier(Identifier),
 	{ok, MonitorState} = reliable_delivery_bucket_store_lite:get_state_for_monitor(Identifier),
 	?assertEqual(MonitorState, <<"acked">> ).
 

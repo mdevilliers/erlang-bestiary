@@ -113,7 +113,9 @@ handle_call({ack, Identifier}, _From, State) ->
 			end;
 		[{_, Identifier, _,<<"acked">>}] ->
 				Reply = {already_acked,{ identifier, Identifier} };
-		{error,not_found} ->
+		[{_, Identifier, _,<<"expired">>}] ->
+				Reply = {error, {expired, Identifier }};
+		[] ->
 				reliable_delivery_monitor_stats:increment_unknown_monitors(),
 				Reply = {error, {identifier_not_found, Identifier }}		
 	end,

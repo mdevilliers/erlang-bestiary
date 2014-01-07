@@ -13,7 +13,7 @@ notify_acked(Pid) ->
   gen_server:call(Pid, acked).
 
 init([Identifier, OffsetInBucket, Application, Value]) ->
-  lager:info("Worker Started Identifier : ~p , OffsetInBucket ~p~n", [Identifier,OffsetInBucket]),
+  %lager:info("Worker Started Identifier : ~p , OffsetInBucket ~p~n", [Identifier,OffsetInBucket]),
   reliable_delivery_monitor_store:insert(Identifier, self()),
 
   StartTime = time_util:now_in_seconds(),
@@ -53,6 +53,7 @@ handle_info(_Info, State) ->
 terminate(_Reason, State) ->
   Identifier = State#lease.identifier,
   reliable_delivery_monitor_store:delete(Identifier),
+  lager:info("Worker Terminated Identifier : ~p ~n", [Identifier]),
   ok.
 
 code_change(_, State, _) ->

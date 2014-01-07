@@ -53,7 +53,7 @@ monitor_then_ack_with_short_expiry_time() ->
     ExpiryTime = 100,
 
 	{ok, Identifier} = reliable_delivery:monitor(ExpiryTime,<<"my application name">>, <<"my value">>),
-	{ok,<<"inmemory">>} = reliable_delivery_bucket_store:get_state(Identifier),
+	timer:sleep(10),
 	{ok,{ identifier, Identifier}} = reliable_delivery:ack(Identifier),
 
 	Stats = get_current_stats(),
@@ -77,7 +77,7 @@ monitor_then_wait_for_expire_with_short_expiry_time() ->
 
 	timer:sleep(ExpiryTime + ExpiryTime),
 	
-	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier),
+	{error, {expired, Identifier }} = reliable_delivery:ack(Identifier),
 
 	Stats = get_current_stats(),
 	
@@ -100,7 +100,7 @@ monitor_then_wait_then_ack_too_late() ->
 
 	timer:sleep(BucketDuration + BucketDuration),
 	
-	{error, {identifier_not_found, Identifier }} = reliable_delivery:ack(Identifier),
+	{error, {expired, Identifier }} = reliable_delivery:ack(Identifier),
 
 	Stats = get_current_stats(),
 	
