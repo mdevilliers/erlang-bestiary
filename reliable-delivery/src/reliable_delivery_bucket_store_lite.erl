@@ -54,7 +54,7 @@ handle_call( {update_expired_monitor, Identifier}, _From, State) ->
 	reliable_delivery_monitor_stats:increment_expired_monitors(),
 	reliable_delivery_monitor_stats:decrement_current_monitors(),
 	reliable_delivery_monitor_stats:decrement_persisted_monitors(),
-	
+
 	{reply, ok ,State};
 handle_call({get_state, Bucket}, _From, State) ->
 	
@@ -82,11 +82,8 @@ handle_call({ack, Identifier}, _From, State) ->
 		[{_, Identifier, _, <<"inprogress">>}] ->
 			case ets:select_delete(?BUCKET_MONITOR_TABLE_ID , [{#bucket_monitor{ bucket = '_', identifier = '$1'}, [{'==','$1',{const,Identifier}}],[true]}]) of
 				1 ->
-					% set new state
-	        		true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, <<"acked">> }),
-	        		% delete the monitor
-					true = ets:delete(?MONITOR_TABLE_ID,Identifier),
-					
+					update_state_and_delete_monitor(Identifier, <<"acked">>),
+
 					reliable_delivery_monitor_stats:increment_acked_monitors(),
 					reliable_delivery_monitor_stats:decrement_current_monitors(),
 					reliable_delivery_monitor_stats:decrement_persisted_monitors(),
@@ -100,29 +97,25 @@ handle_call({ack, Identifier}, _From, State) ->
 		[{_, Identifier, _, <<"inmemory">>}] -> 
 			case reliable_delivery_monitor_store:lookup(Identifier) of
 				{ok, _, Pid}  ->
-
-					% set new state
-					true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, <<"expired">> }),
+					update_state_and_delete_monitor(Identifier, <<"expired">>),
 
 					reliable_delivery_monitor:notify_acked(Pid),
 
-					% delete the monitor
-					true = ets:delete(?MONITOR_TABLE_ID,Identifier),
-				
 					reliable_delivery_monitor_stats:increment_acked_monitors(),
 					reliable_delivery_monitor_stats:decrement_current_monitors(),
 					reliable_delivery_monitor_stats:decrement_persisted_monitors(),
 
 					Reply = {ok,{ identifier, Identifier} };
 				{error, not_found} ->
+
 					reliable_delivery_monitor_stats:increment_unknown_monitors(),
 					Reply = {error, {identifier_not_found, Identifier }}
 			end;
 		[{_, Identifier, _,<<"acked">>}] ->
 				Reply = {already_acked,{ identifier, Identifier} };
 		{error,not_found} ->
-			reliable_delivery_monitor_stats:increment_unknown_monitors(),
-			Reply = {error, {identifier_not_found, Identifier }}		
+				reliable_delivery_monitor_stats:increment_unknown_monitors(),
+				Reply = {error, {identifier_not_found, Identifier }}		
 	end,
 	
 	{reply, Reply ,State};
@@ -136,8 +129,7 @@ handle_call({pop, Bucket}, _, State) ->
 		[] -> 
 			Reply = {error, not_found};
 		Records ->
-			update_multiple_monitors(Records, <<"inmemory">>),
-			Accumulated = accumulate_monitors(Records, []),
+			Accumulated = pop_multiple_monitors(Records, []),
 			Reply = {ok, Accumulated}
 	end,
 
@@ -168,25 +160,25 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
-update_multiple_monitors([], _) ->
-	ok;
-update_multiple_monitors([ #bucket_monitor{ identifier = Identifier } | T], State) ->
+pop_multiple_monitors([], Acc) ->
+	Acc;
+pop_multiple_monitors([ #bucket_monitor{ identifier = Identifier } | T], Acc) ->
 
 	% update state
-	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, State }),
+	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4,  <<"inmemory">> }),
 
 	% remove from bucket
  	1 = ets:select_delete(?BUCKET_MONITOR_TABLE_ID , [{#bucket_monitor{ bucket = '_', identifier = '$1'}, [{'==','$1',{const,Identifier}}],[true]}]),
 
-	update_multiple_monitors(T, State).
-
-accumulate_monitors([] , Acc) ->
-	Acc;
-accumulate_monitors([ #bucket_monitor{ identifier = Identifier } | T] , Acc) ->
-	case ets:lookup(?MONITOR_TABLE_ID,Identifier) of
+ 	case ets:lookup(?MONITOR_TABLE_ID,Identifier) of
 		[{monitor, Identifier,  OffsetInBucket, LeaseTime, Application, Value }] ->
-			accumulate_monitors(T, [{Identifier, LeaseTime, Application, OffsetInBucket, Value } | Acc]);
+			pop_multiple_monitors(T, [{Identifier, LeaseTime, Application, OffsetInBucket, Value } | Acc]);
 		[] -> 
 			{error, identifier_not_found}
 	end.
 
+update_state_and_delete_monitor(Identifier, State) ->
+	% set new state
+	true = ets:update_element(?MONITOR_STATE_TABLE_ID, Identifier, { 4, State }),
+	% delete the monitor
+	true = ets:delete(?MONITOR_TABLE_ID,Identifier).
