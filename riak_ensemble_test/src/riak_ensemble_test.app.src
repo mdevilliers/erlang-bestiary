@@ -1,0 +1,14 @@
+{application, riak_ensemble_test,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  lager
+                 ]},
+
+  {mod, { riak_ensemble_test_app, []}},
+  {env, [{data_root, "temp"}]}
+ ]}.
