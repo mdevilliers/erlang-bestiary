@@ -5,6 +5,11 @@
 
 -record (game, {players = [], centre = []}).
 
+% impl of beggarthyneigbour card game
+% -------------------------------------------------------------
+% NOTE : this is the version played in the deVilliers household
+% -------------------------------------------------------------
+
 new_game(NoOfPlayers) ->
 	Shuffled = cards:shuffle(cards:make_deck()),
 	Delt = cards:deal(Shuffled, NoOfPlayers),
@@ -20,9 +25,9 @@ decision({"Q",_}) -> {must_play, 2};
 decision({"J",_}) -> {must_play, 1};
 decision({_,_}) -> { ok }.
 
-game_loop( {must_play, 1}, #game{ players = [Next|Rest], centre = Centre}) ->
+game_loop( {must_play, 1}, #game{ players = [CurrentPlayer|Rest], centre = Centre}) ->
 
-	Next ! {next_card, self()},
+	CurrentPlayer ! {next_card, self()},
 
 	receive
 		{Action, Card} ->
@@ -34,12 +39,12 @@ game_loop( {must_play, 1}, #game{ players = [Next|Rest], centre = Centre}) ->
 				play ->
 					case Decision of
 						{ok} ->
-							NewState =  #game{ players =  lists:flatten(Rest,[Next]), centre = []},
+							NewState =  #game{ players = lists:flatten(Rest,[CurrentPlayer]), centre = []},
 							debug_game("pick up pot", Decision, NewState),
-							Next ! {pick_up, Pot},
+							CurrentPlayer ! {pick_up, Pot},
 							game_loop( {ok}, NewState);
 						_ ->
-							NewState =  #game{ players =  lists:flatten(Rest,[Next]), centre = Pot},
+							NewState =  #game{ players = lists:flatten(Rest,[CurrentPlayer]), centre = Pot},
 							debug_game("next player", Decision, NewState),
 							game_loop( Decision, NewState)
 					end;
@@ -54,9 +59,9 @@ game_loop( {must_play, 1}, #game{ players = [Next|Rest], centre = Centre}) ->
 			end
 	end;
 
-game_loop( {must_play, N}, #game{ players = [Next|Rest] = Players, centre = Centre}) ->
+game_loop( {must_play, N}, #game{ players = [CurrentPlayer|Rest] = Players, centre = Centre}) ->
 
-	Next ! {next_card, self()},
+	CurrentPlayer ! {next_card, self()},
 
 	receive 
 			{Action, Card} ->
@@ -72,7 +77,7 @@ game_loop( {must_play, N}, #game{ players = [Next|Rest] = Players, centre = Cent
 							debug_game("same player", Decision, NewState),
 							game_loop( {must_play, N - 1},  NewState);
 						_ ->
-							NewState =  #game{ players =  lists:flatten(Rest,[Next]), centre = Pot},
+							NewState =  #game{ players =  lists:flatten(Rest,[CurrentPlayer]), centre = Pot},
 							debug_game("next player", Decision, NewState),
 							game_loop( Decision, NewState)
 					end;
@@ -87,9 +92,9 @@ game_loop( {must_play, N}, #game{ players = [Next|Rest] = Players, centre = Cent
 			end
 	end;
 
-game_loop( {ok}, #game{ players = [Next|Rest], centre = Centre}) ->
+game_loop( {ok}, #game{ players = [CurrentPlayer|Rest], centre = Centre}) ->
 
-	Next ! {next_card, self()},
+	CurrentPlayer ! {next_card, self()},
 
 	receive 
 			{Action, Card} ->
@@ -99,7 +104,7 @@ game_loop( {ok}, #game{ players = [Next|Rest], centre = Centre}) ->
 
 				case Action of
 				play ->
-					NewState =  #game{ players = lists:flatten(Rest,[Next]), centre = Pot},
+					NewState =  #game{ players = lists:flatten(Rest,[CurrentPlayer]), centre = Pot},
 					debug_game("next player", Decision, NewState),
 					game_loop( Decision, NewState);
 				no_more_cards ->
