@@ -12,7 +12,8 @@ start_link() ->
 	gen_server:start({local, ?MODULE}, ?MODULE, [], []).
 
 register() ->
-	Register = <<"{ \"framework_info\" : { \"user\" : \"two\", \"name\" : \"erlang\"}}">>,
+	Register = <<"{ \"type\" : \"SUBSCRIBE\",  \"subscribe\" : { \"framework_info\" : { \"user\" : \"two\", \"name\" : \"erlang\"}} }">>,
+
 	gen_server:call(?MODULE, {register, Register}).
 
 init([]) ->
@@ -21,7 +22,7 @@ init([]) ->
 handle_call({register, Register}, _From, State) ->
 
 	Method = post,
-	URL = "http://localhost:8081/call",
+	URL = "http://mesos-dev:5050/api/v1/scheduler",
 	Header = [],
 	Type = "application/json",
 	Body = Register,
